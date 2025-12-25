@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Explore Polls - PollPulse</title>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/animations.css">
+    <link rel="stylesheet" href="css/components.css">
+    <style>
+        .explore-header {
+            text-align: center;
+            margin: var(--space-3xl) 0 var(--space-2xl);
+        }
+
+        .search-bar {
+            max-width: 600px;
+            margin: 0 auto var(--space-2xl);
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: var(--space-lg) var(--space-xl);
+            padding-left: 60px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 2px solid var(--glass-border);
+            border-radius: var(--radius-full);
+            color: var(--color-white);
+            font-size: 1.125rem;
+            transition: var(--transition-base);
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--color-red-primary);
+            box-shadow: 0 0 30px rgba(255, 0, 68, 0.3);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 24px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.5rem;
+            pointer-events: none;
+        }
+
+        .filter-tabs {
+            display: flex;
+            gap: var(--space-md);
+            justify-content: center;
+            margin-bottom: var(--space-2xl);
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: var(--space-md) var(--space-xl);
+            background: var(--glass-bg);
+            border: 2px solid var(--glass-border);
+            border-radius: var(--radius-full);
+            color: var(--color-white);
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition-base);
+        }
+
+        .filter-btn:hover {
+            border-color: var(--color-red-primary);
+            transform: translateY(-2px);
+        }
+
+        .filter-btn.active {
+            background: var(--color-red-primary);
+            border-color: var(--color-red-primary);
+        }
+
+        .polls-count {
+            text-align: center;
+            color: var(--color-gray-300);
+            margin-bottom: var(--space-xl);
+            font-size: 1.125rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: var(--space-3xl);
+            color: var(--color-gray-400);
+        }
+
+        .empty-state-icon {
+            font-size: 5rem;
+            margin-bottom: var(--space-lg);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="bg-animated"></div>
+    <div class="shape shape-1"></div>
+    <div class="shape shape-2"></div>
+    <div class="shape shape-3"></div>
+
+    <div class="container">
+        <nav>
+            <a href="index.html" class="logo">
+                <span class="logo-icon">🎪</span>
+                <span>PollPulse</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="explore.html" class="active">Explore</a></li>
+                <li><a href="create.html">Create</a></li>
+                <li><a href="leaderboard.html">Leaderboard</a></li>
+            </ul>
+            <button class="btn btn-primary" onclick="window.location.href='create.html'">
+                <span>✨</span>
+                <span>Create Poll</span>
+            </button>
+        </nav>
+
+        <div class="explore-header animate-fadeInDown">
+            <h1 class="section-title">Explore Polls</h1>
+            <p class="section-subtitle">Discover and vote on polls from around the world</p>
+        </div>
+
+        <div class="search-bar animate-fadeInUp">
+            <span class="search-icon">🔍</span>
+            <input type="text" class="search-input" placeholder="Search polls..." id="searchInput">
+        </div>
+
+        <div class="filter-tabs animate-fadeInUp delay-200">
+            <button class="filter-btn active" data-filter="all">🔥 All Polls</button>
+            <button class="filter-btn" data-filter="trending">📈 Trending</button>
+            <button class="filter-btn" data-filter="new">✨ New</button>
+            <button class="filter-btn" data-filter="popular">⭐ Popular</button>
+            <button class="filter-btn" data-filter="ending">⏰ Ending Soon</button>
+        </div>
+
+        <div class="polls-count" id="pollsCount">
+            Showing <strong>12</strong> polls
+        </div>
+
+        <div class="polls-grid" id="pollsGrid">
+            <!-- Sample Polls -->
+            <div class="poll-card animate-fadeInUp" onclick="window.location.href='vote.html?id=1'">
+                <div class="poll-header">
+                    <div class="poll-badge">
+                        <div class="live-dot"></div>
+                        <span>VIRAL</span>
+                    </div>
+                    <div class="poll-votes">4,291 votes</div>
+                </div>
+                <div class="poll-question">🍕 Pineapple on pizza: Yay or Nay?</div>
+                <div class="poll-options">
+                    <div class="poll-option" style="--width: 68%">
+                        <div class="option-content">
+                            <div class="option-text">
+                                <span class="option-emoji">✅</span>
+                                <span>Absolutely YES!</span>
+                            </div>
+                            <div class="option-percentage">68%</div>
+                        </div>
+                    </div>
+                    <div class="poll-option" style="--width: 24%">
+                        <div class="option-content">
+                            <div class="option-text">
+                                <span class="option-emoji">❌</span>
+                                <span>NO WAY!</span>
+                            </div>
+                            <div class="option-percentage">24%</div>
+                        </div>
+                    </div>
+                    <div class="poll-option" style="--width: 8%">
+                        <div class="option-content">
+                            <div class="option-text">
+                                <span class="option-emoji">🤷</span>
+                                <span>Don't care</span>
+                            </div>
+                            <div class="option-percentage">8%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="poll-card animate-fadeInUp delay-100" onclick="window.location.href='vote.html?id=2'">
+                <div class="poll-header">
+                    <div class="poll-badge">
+                        <div class="live-dot"></div>
+                        <span>HOT</span>
+                    </div>
+                    <div class="poll-votes">2,847 votes</div>
+                </div>
+                <div class="poll-question">🦸 Ultimate Superhero Battle</div>
+                <div class="poll-options">
+                    <div class="poll-option" style="--width: 45%">
+                        <div class="option-content">
+                            <div class="option-text">
+                                <span class="option-emoji">🦇</span>
+                                <span>Batman</span>
+                            </div>
+                            <div class="option-percentage">45%</div>
+                        </div>
+                    </div>
+                    <div class="poll-option" style="--width: 38%">
+                        <div class="option-content">
+                            <div class="option-text">
+                                <span class="option-emoji">💪</span>
+                                <span>Superman</span>
+                            </div>
+                            <div class="option-percentage">38%</div>
+                        </div>
+                    </div>
+                    <div class="poll-option" style="--width: 17%">
+                        <div class="option-content">
+                            <div class="option-text">
+                                <span class="option-emoji">🕷️</span>
+                                <span>Spider-Man</span>
+                            </div>
+                            <div class="option-percentage">17%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="poll-card animate-fadeInUp delay-200" onclick="window.location.href='vote.html?id=3'">
+                <div class="poll-header">
+                    <div class="poll-badge">
+                        <div class="live-dot"></div>
+                        <span>NEW</span>
+                    </div>
+                    <div class="poll-votes">1,293 votes</div>
+                </div>
+                <div class="poll-question">☕ Coffee Preferences</div>
+                <div class="poll-options">
+                    <div class="poll-option" style="--width: 52%">
+                        <div class="option-content">
+                            <div class="option-text">
+                                <span class="option-emoji">⚫</span>
+                                <span>Black</span>
+                            </div>
+                            <div class="option-percentage">52%</div>
+                        </div>
+                    </div>
+                    <div class="poll-option" style="--width: 31%">
+                        <div class="option-content">
+                            <div class="option-text">
+                                <span class="option-emoji">🥛</span>
+                                <span>With milk</span>
+                            </div>
+                            <div class="option-percentage">31%</div>
+                        </div>
+                    </div>
+                    <div class="poll-option" style="--width: 17%">
+                        <div class="option-content">
+                            <div class="option-text">
+                                <span class="option-emoji">🍰</span>
+                                <span>Fancy</span>
+                            </div>
+                            <div class="option-percentage">17%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Filter functionality
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', function () {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+
+                const filter = this.dataset.filter;
+                console.log('Filtering by:', filter);
+                // TODO: Fetch and display filtered polls
+            });
+        });
+
+        // Search functionality
+        document.getElementById('searchInput').addEventListener('input', function (e) {
+            const query = e.target.value.toLowerCase();
+            console.log('Searching for:', query);
+            // TODO: Filter polls by search query
+        });
+
+        // Poll option width animation
+        document.querySelectorAll('.poll-option').forEach(option => {
+            const width = option.style.getPropertyValue('--width') || '0%';
+            option.style.setProperty('--width', width);
+            option.querySelector('::before').style.width = width;
+        });
+    </script>
+</body>
+
+</html>
