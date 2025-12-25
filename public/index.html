@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="PollPulse - Real-time interactive voting platform with beautiful visualizations">
+    <title>🎪 PollPulse - Interactive Voting Platform</title>
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/animations.css">
+    <link rel="stylesheet" href="css/components.css">
+
+    <!-- Favicon -->
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎪</text></svg>">
+</head>
+
+<body>
+    <!-- Animated Background -->
+    <div class="bg-animated"></div>
+    <div class="shape shape-1"></div>
+    <div class="shape shape-2"></div>
+    <div class="shape shape-3"></div>
+
+    <div class="container">
+        <!-- Navigation -->
+        <nav>
+            <a href="index.html" class="logo">
+                <span class="logo-icon">🎪</span>
+                <span>PollPulse</span>
+            </a>
+
+            <ul class="nav-links">
+                <li><a href="index.html" class="active">Home</a></li>
+                <li><a href="explore.html">Explore</a></li>
+                <li><a href="create.html">Create</a></li>
+                <li><a href="leaderboard.html">Leaderboard</a></li>
+            </ul>
+
+            <button class="btn btn-primary" onclick="window.location.href='create.html'">
+                <span>✨</span>
+                <span>Create Poll</span>
+            </button>
+        </nav>
+
+        <!-- Hero Section -->
+        <section class="hero">
+            <div class="hero-content animate-fadeInLeft">
+                <h1>Voting That Feels Like Magic</h1>
+                <p>
+                    Create stunning polls, watch results unfold in real-time,
+                    and turn ordinary questions into extraordinary experiences.
+                </p>
+                <div class="hero-buttons">
+                    <button class="btn btn-primary btn-lg" onclick="window.location.href='create.html'">
+                        <span>🚀</span>
+                        <span>Launch Your Poll</span>
+                    </button>
+                    <button class="btn btn-secondary btn-lg" onclick="window.location.href='explore.html'">
+                        <span>🔍</span>
+                        <span>Explore Polls</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="hero-visual animate-fadeInRight">
+                <!-- Hero Image -->
+                <div class="hero-image-container">
+                    <img src="https://images.unsplash.com/photo-1557804506-669a67965ba0?w=800&h=600&fit=crop"
+                        alt="Team collaboration" class="hero-image glass" loading="lazy">
+                    <div class="hero-image-overlay"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Live Stats -->
+        <section class="stats-grid animate-fadeInUp">
+            <div class="stat-card">
+                <div class="stat-icon">🗳️</div>
+                <div class="stat-value" id="totalVotes">24,391</div>
+                <div class="stat-label">Votes Today</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">👥</div>
+                <div class="stat-value" id="activeUsers">1,247</div>
+                <div class="stat-label">Online Now</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🔥</div>
+                <div class="stat-value" id="trendingPolls">156</div>
+                <div class="stat-label">Trending</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">⚡</div>
+                <div class="stat-value" id="voteSpeed">2,847</div>
+                <div class="stat-label">Votes/Hour</div>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section class="section-header">
+            <h2 class="section-title">Why PollPulse?</h2>
+            <p class="section-subtitle">
+                More than just polls - an interactive experience
+            </p>
+        </section>
+
+        <section class="features-grid">
+            <div class="feature-card animate-fadeInUp">
+                <div class="feature-image">
+                    <img src="https://images.unsplash.com/photo-1551434678-e076c223a692?w=600&h=400&fit=crop"
+                        alt="Real-time collaboration" loading="lazy">
+                </div>
+                <div class="feature-content">
+                    <div class="feature-icon">⚡</div>
+                    <h3>Real-Time Results</h3>
+                    <p>Watch votes pour in live with stunning visualizations. No refresh needed.</p>
+                </div>
+            </div>
+
+            <div class="feature-card animate-fadeInUp delay-200">
+                <div class="feature-image">
+                    <img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&h=400&fit=crop"
+                        alt="Beautiful analytics" loading="lazy">
+                </div>
+                <div class="feature-content">
+                    <div class="feature-icon">📊</div>
+                    <h3>Beautiful Analytics</h3>
+                    <p>Deep insights with gorgeous charts. Understand your audience like never before.</p>
+                </div>
+            </div>
+
+            <div class="feature-card animate-fadeInUp delay-400">
+                <div class="feature-image">
+                    <img src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=600&h=400&fit=crop"
+                        alt="Engagement features" loading="lazy">
+                </div>
+                <div class="feature-content">
+                    <div class="feature-icon">🎮</div>
+                    <h3>Gamification</h3>
+                    <p>Badges, streaks, and leaderboards. Make voting fun and engaging.</p>
+                </div>
+            </div>
+
+            <div class="feature-card animate-fadeInUp delay-600">
+                <div class="feature-image">
+                    <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=600&h=400&fit=crop"
+                        alt="Mobile responsive" loading="lazy">
+                </div>
+                <div class="feature-content">
+                    <div class="feature-icon">📱</div>
+                    <h3>Mobile First</h3>
+                    <p>Perfect experience on any device. Desktop, tablet, or phone.</p>
+                </div>
+            </div>
+
+            <div class="feature-card animate-fadeInUp delay-800">
+                <div class="feature-image">
+                    <img src="https://images.unsplash.com/photo-1563986768609-322da13575f3?w=600&h=400&fit=crop"
+                        alt="Easy sharing" loading="lazy">
+                </div>
+                <div class="feature-content">
+                    <div class="feature-icon">🔗</div>
+                    <h3>Easy Sharing</h3>
+                    <p>QR codes, direct links, social media. Share your polls anywhere.</p>
+                </div>
+            </div>
+
+            <div class="feature-card animate-fadeInUp delay-1000">
+                <div class="feature-image">
+                    <img src="https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?w=600&h=400&fit=crop"
+                        alt="Secure and private" loading="lazy">
+                </div>
+                <div class="feature-content">
+                    <div class="feature-icon">🔒</div>
+                    <h3>Secure & Private</h3>
+                    <p>Your data is safe. Anonymous voting with enterprise-grade security.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Trending Polls -->
+        <section class="section-header">
+            <h2 class="section-title">🔥 Trending Right Now</h2>
+            <p class="section-subtitle">Join thousands voting on today's hottest polls</p>
+        </section>
+
+        <section class="polls-grid" id="trendingPollsGrid">
+            <!-- Polls will be loaded here by JavaScript -->
+            <div class="poll-card-skeleton"></div>
+            <div class="poll-card-skeleton"></div>
+            <div class="poll-card-skeleton"></div>
+        </section>
+
+        <!-- How It Works -->
+        <section class="section-header">
+            <h2 class="section-title">How It Works</h2>
+            <p class="section-subtitle">Create your first poll in 3 easy steps</p>
+        </section>
+
+        <section class="steps-grid">
+            <div class="step-card animate-fadeInUp">
+                <div class="step-number">1</div>
+                <div class="step-image">
+                    <img src="https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?w=600&h=400&fit=crop"
+                        alt="Create your question" loading="lazy">
+                </div>
+                <h3>Create Your Question</h3>
+                <p>Type your question and add answer options. Customize with emojis and colors.</p>
+            </div>
+
+            <div class="step-card animate-fadeInUp delay-300">
+                <div class="step-number">2</div>
+                <div class="step-image">
+                    <img src="https://images.unsplash.com/photo-1553877522-43269d4ea984?w=600&h=400&fit=crop"
+                        alt="Share with anyone" loading="lazy">
+                </div>
+                <h3>Share Anywhere</h3>
+                <p>Get a unique link or QR code. Share via email, social media, or messaging apps.</p>
+            </div>
+
+            <div class="step-card animate-fadeInUp delay-600">
+                <div class="step-number">3</div>
+                <div class="step-image">
+                    <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=600&h=400&fit=crop"
+                        alt="Watch results live" loading="lazy">
+                </div>
+                <h3>Watch Results Live</h3>
+                <p>See votes roll in real-time. Analyze trends with beautiful charts and insights.</p>
+            </div>
+        </section>
+
+        <!-- CTA Section -->
+        <section class="cta-section animate-fadeInUp">
+            <div class="cta-content">
+                <h2>Ready to Create Magic?</h2>
+                <p>Launch your poll in 30 seconds. Watch the votes pour in. Feel the excitement.</p>
+                <button class="btn btn-primary btn-lg" onclick="window.location.href='create.html'">
+                    <span>✨</span>
+                    <span>Create Your First Poll</span>
+                    <span>🚀</span>
+                </button>
+            </div>
+            <div class="cta-image">
+                <img src="https://images.unsplash.com/photo-1529070538774-1843cb3265df?w=800&h=600&fit=crop"
+                    alt="Start creating" loading="lazy" class="glass">
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>PollPulse</h4>
+                    <p>Making voting interactive and fun.</p>
+                    <div class="footer-social">
+                        <a href="#" aria-label="Twitter">🐦</a>
+                        <a href="#" aria-label="Instagram">📸</a>
+                        <a href="#" aria-label="LinkedIn">💼</a>
+                        <a href="#" aria-label="GitHub">💻</a>
+                    </div>
+                </div>
+
+                <div class="footer-section">
+                    <h4>Product</h4>
+                    <a href="explore.html">Explore Polls</a>
+                    <a href="create.html">Create Poll</a>
+                    <a href="leaderboard.html">Leaderboard</a>
+                </div>
+
+                <div class="footer-section">
+                    <h4>Resources</h4>
+                    <a href="#">Documentation</a>
+                    <a href="#">API</a>
+                    <a href="#">Support</a>
+                </div>
+
+                <div class="footer-section">
+                    <h4>Legal</h4>
+                    <a href="#">Privacy Policy</a>
+                    <a href="#">Terms of Service</a>
+                    <a href="#">Cookie Policy</a>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <p>&copy; 2024 PollPulse. Built with ❤️ for Cloud Computing Capstone.</p>
+                <p>Powered by AWS • EC2 • RDS • S3</p>
+            </div>
+        </footer>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="js/app.js"></script>
+    <script src="js/animations.js"></script>
+    <script>
+        // Animate counting numbers
+        function animateValue(id, start, end, duration) {
+            const obj = document.getElementById(id);
+            const range = end - start;
+            const startTime = performance.now();
+
+            function update(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const value = Math.floor(start + (range * progress));
+                obj.textContent = value.toLocaleString();
+
+                if (progress < 1) {
+                    requestAnimationFrame(update);
+                }
+            }
+
+            requestAnimationFrame(update);
+        }
+
+        // Start animations on load
+        window.addEventListener('load', () => {
+            animateValue('totalVotes', 0, 24391, 2000);
+            animateValue('activeUsers', 0, 1247, 1500);
+            animateValue('trendingPolls', 0, 156, 1800);
+            animateValue('voteSpeed', 0, 2847, 2200);
+        });
+
+        // Simulate live updates
+        setInterval(() => {
+            const current = parseInt(document.getElementById('totalVotes').textContent.replace(/,/g, ''));
+            const newVotes = current + Math.floor(Math.random() * 8) + 3;
+            document.getElementById('totalVotes').textContent = newVotes.toLocaleString();
+        }, 5000);
+    </script>
+</body>
+
+</html>
