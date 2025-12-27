@@ -6,22 +6,34 @@ package-lock.json
 .env
 .env.local
 .env.production
+server/.env
 
 # Logs
 logs/
 *.log
 npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
 # OS files
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
 
 # IDE
 .vscode/
 .idea/
+*.swp
+*.swo
+*~
 
 # AWS
 *.pem
+*.ppk
 *.key
 
 # Temporary files
@@ -35,3 +47,7 @@ build/
 
 # Database
 *.sql.backup
+*.db
+
+# PM2
+.pm2/

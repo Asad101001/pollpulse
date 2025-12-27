@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaderboard - PollPulse</title>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/animations.css">
+    <link rel="stylesheet" href="css/components.css">
+    <style>
+        .leaderboard-tabs {
+            display: flex;
+            gap: var(--space-md);
+            justify-content: center;
+            margin-bottom: var(--space-2xl);
+        }
+
+        .tab-btn {
+            padding: var(--space-md) var(--space-2xl);
+            background: var(--glass-bg);
+            border: 2px solid var(--glass-border);
+            border-radius: var(--radius-full);
+            color: var(--color-white);
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition-base);
+        }
+
+        .tab-btn.active {
+            background: var(--color-red-primary);
+            border-color: var(--color-red-primary);
+        }
+
+        .leaderboard-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-2xl);
+            padding: var(--space-2xl);
+            margin-bottom: var(--space-xl);
+        }
+
+        .leaderboard-item {
+            display: flex;
+            align-items: center;
+            gap: var(--space-lg);
+            padding: var(--space-lg);
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            margin-bottom: var(--space-md);
+            transition: var(--transition-base);
+        }
+
+        .leaderboard-item:hover {
+            background: rgba(255, 0, 68, 0.05);
+            border-color: var(--color-red-primary);
+            transform: translateX(8px);
+        }
+
+        .rank {
+            font-size: 2rem;
+            font-weight: 900;
+            min-width: 60px;
+            text-align: center;
+        }
+
+        .rank-1 {
+            color: #ffd700;
+        }
+
+        .rank-2 {
+            color: #c0c0c0;
+        }
+
+        .rank-3 {
+            color: #cd7f32;
+        }
+
+        .user-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--color-red-primary), var(--color-red-dark));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--color-white);
+        }
+
+        .user-info {
+            flex: 1;
+        }
+
+        .user-name {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--color-white);
+            margin-bottom: var(--space-xs);
+        }
+
+        .user-stats {
+            font-size: 0.875rem;
+            color: var(--color-gray-400);
+        }
+
+        .user-score {
+            text-align: right;
+        }
+
+        .score-value {
+            font-size: 2rem;
+            font-weight: 900;
+            color: var(--color-red-primary);
+        }
+
+        .score-label {
+            font-size: 0.875rem;
+            color: var(--color-gray-400);
+        }
+
+        .badges {
+            display: flex;
+            gap: var(--space-sm);
+            margin-top: var(--space-sm);
+        }
+
+        .badge {
+            font-size: 1.25rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="bg-animated"></div>
+    <div class="shape shape-1"></div>
+    <div class="shape shape-2"></div>
+    <div class="shape shape-3"></div>
+
+    <div class="container">
+        <nav>
+            <a href="index.html" class="logo">
+                <span class="logo-icon">🎪</span>
+                <span>PollPulse</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="explore.html">Explore</a></li>
+                <li><a href="create.html">Create</a></li>
+                <li><a href="leaderboard.html" class="active">Leaderboard</a></li>
+            </ul>
+            <button class="btn btn-primary" onclick="window.location.href='create.html'">
+                <span>✨</span>
+                <span>Create Poll</span>
+            </button>
+        </nav>
+
+        <div class="section-header animate-fadeInDown">
+            <h1 class="section-title">🏆 Leaderboard</h1>
+            <p class="section-subtitle">Top contributors and popular polls</p>
+        </div>
+
+        <div class="leaderboard-tabs animate-fadeInUp">
+            <button class="tab-btn active" onclick="switchTab('voters')">
+                👥 Top Voters
+            </button>
+            <button class="tab-btn" onclick="switchTab('polls')">
+                📊 Popular Polls
+            </button>
+        </div>
+
+        <div class="leaderboard-card animate-fadeInUp delay-200">
+            <div id="leaderboardContent">
+                <!-- Top Voters -->
+                <div class="leaderboard-item">
+                    <div class="rank rank-1">🥇</div>
+                    <div class="user-avatar">A</div>
+                    <div class="user-info">
+                        <div class="user-name">Anonymous Voter</div>
+                        <div class="user-stats">
+                            Member since 2 weeks ago • 🔥 12 day streak
+                        </div>
+                        <div class="badges">
+                            <span class="badge" title="First Vote">🗳️</span>
+                            <span class="badge" title="7 Day Streak">🔥</span>
+                            <span class="badge" title="Speed Demon">⚡</span>
+                        </div>
+                    </div>
+                    <div class="user-score">
+                        <div class="score-value">847</div>
+                        <div class="score-label">Total Votes</div>
+                    </div>
+                </div>
+
+                <div class="leaderboard-item">
+                    <div class="rank rank-2">🥈</div>
+                    <div class="user-avatar">B</div>
+                    <div class="user-info">
+                        <div class="user-name">Poll Enthusiast</div>
+                        <div class="user-stats">
+                            Member since 10 days ago • 🔥 8 day streak
+                        </div>
+                        <div class="badges">
+                            <span class="badge">🗳️</span>
+                            <span class="badge">⚡</span>
+                        </div>
+                    </div>
+                    <div class="user-score">
+                        <div class="score-value">623</div>
+                        <div class="score-label">Total Votes</div>
+                    </div>
+                </div>
+
+                <div class="leaderboard-item">
+                    <div class="rank rank-3">🥉</div>
+                    <div class="user-avatar">C</div>
+                    <div class="user-info">
+                        <div class="user-name">Active Participant</div>
+                        <div class="user-stats">
+                            Member since 1 week ago • 🔥 5 day streak
+                        </div>
+                        <div class="badges">
+                            <span class="badge">🗳️</span>
+                        </div>
+                    </div>
+                    <div class="user-score">
+                        <div class="score-value">492</div>
+                        <div class="score-label">Total Votes</div>
+                    </div>
+                </div>
+
+                <div class="leaderboard-item">
+                    <div class="rank">4</div>
+                    <div class="user-avatar">D</div>
+                    <div class="user-info">
+                        <div class="user-name">Voter #4</div>
+                        <div class="user-stats">Member since 5 days ago</div>
+                    </div>
+                    <div class="user-score">
+                        <div class="score-value">381</div>
+                        <div class="score-label">Total Votes</div>
+                    </div>
+                </div>
+
+                <div class="leaderboard-item">
+                    <div class="rank">5</div>
+                    <div class="user-avatar">E</div>
+                    <div class="user-info">
+                        <div class="user-name">Voter #5</div>
+                        <div class="user-stats">Member since 3 days ago</div>
+                    </div>
+                    <div class="user-score">
+                        <div class="score-value">247</div>
+                        <div class="score-label">Total Votes</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="cta-section animate-fadeInUp delay-400">
+            <div class="cta-content">
+                <h2>Join the Competition!</h2>
+                <p>Vote on polls to climb the leaderboard and earn badges</p>
+                <button class="btn btn-primary btn-lg" onclick="window.location.href='explore.html'">
+                    <span>🗳️</span>
+                    <span>Start Voting</span>
+                </button>
+            </div>
+            <div class="cta-image">
+                <img src="https://images.unsplash.com/photo-1552664730-d307ca884978?w=600&h=400&fit=crop"
+                    alt="Join competition" loading="lazy" class="glass">
+            </div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+    <script>
+        function switchTab(tab) {
+            // Update active tab
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // TODO: Fetch and display leaderboard data
+            console.log('Switched to tab:', tab);
+        }
+
+        // Load leaderboard data
+        async function loadLeaderboard() {
+            try {
+                const data = await PollPulse.fetchLeaderboard('voters', 10);
+                console.log('Leaderboard data:', data);
+                // TODO: Render leaderboard
+            } catch (error) {
+                console.error('Failed to load leaderboard:', error);
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadLeaderboard();
+        });
+    </script>
+</body>
+
+</html>
