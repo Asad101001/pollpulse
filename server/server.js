@@ -1,13 +1,13 @@
 // ============================================
-// POLLPULSE - BACKEND SERVER
-// Node.js + Express + MySQL
+// POLLPULSE - BACKEND SERVER (FIXED)
 // ============================================
 
 const express = require('express');
-const mysql = require('mysql2/promise');
 const cors = require('cors');
 const path = require('path');
 require('dotenv').config();
+
+const { pool, testConnection } = require('./config/database');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -28,31 +28,7 @@ app.use((req, res, next) => {
 });
 
 // ============================================
-// DATABASE CONNECTION POOL
-// ============================================
-
-const pool = mysql.createPool({
-    host: process.env.DB_HOST || 'localhost',
-    user: process.env.DB_USER || 'pollpulse_app',
-    password: process.env.DB_PASSWORD || 'your_password',
-    database: process.env.DB_NAME || 'pollpulse',
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0
-});
-
-// Test database connection
-pool.getConnection()
-    .then(connection => {
-        console.log('✅ Database connected successfully');
-        connection.release();
-    })
-    .catch(err => {
-        console.error('❌ Database connection failed:', err);
-    });
-
-// ============================================
-// API ROUTES
+// ROUTES
 // ============================================
 
 // Health check
@@ -60,7 +36,8 @@ app.get('/api/health', (req, res) => {
     res.json({ 
         status: 'ok', 
         timestamp: new Date().toISOString(),
-        uptime: process.uptime()
+        uptime: process.uptime(),
+        database: pool ? 'connected' : 'disconnected'
     });
 });
 
@@ -84,30 +61,16 @@ app.get('/api/polls', async (req, res) => {
             WHERE p.status = 'active'
         `;
         
+        const params = [];
+        
         if (search) {
             query += ` AND p.question LIKE ?`;
+            params.push(`%${search}%`);
         }
         
-        query += ` GROUP BY p.id`;
+        query += ` GROUP BY p.id ORDER BY p.created_at DESC LIMIT ?`;
+        params.push(parseInt(limit));
         
-        // Apply filters
-        switch(filter) {
-            case 'trending':
-                query += ` HAVING vote_count > 100 ORDER BY vote_count DESC`;
-                break;
-            case 'new':
-                query += ` ORDER BY p.created_at DESC`;
-                break;
-            case 'popular':
-                query += ` ORDER BY vote_count DESC`;
-                break;
-            default:
-                query += ` ORDER BY p.created_at DESC`;
-        }
-        
-        query += ` LIMIT ?`;
-        
-        const params = search ? [`%${search}%`, parseInt(limit)] : [parseInt(limit)];
         const [polls] = await pool.query(query, params);
         
         res.json({ success: true, polls });
@@ -122,7 +85,6 @@ app.get('/api/polls/:id', async (req, res) => {
     try {
         const pollId = req.params.id;
         
-        // Get poll details
         const [polls] = await pool.query(
             'SELECT * FROM polls WHERE id = ? AND status = "active"',
             [pollId]
@@ -134,7 +96,6 @@ app.get('/api/polls/:id', async (req, res) => {
         
         const poll = polls[0];
         
-        // Get poll options with vote counts
         const [options] = await pool.query(`
             SELECT 
                 po.id,
@@ -152,7 +113,6 @@ app.get('/api/polls/:id', async (req, res) => {
             ORDER BY po.display_order
         `, [pollId, pollId]);
         
-        // Get total votes
         const [totalVotes] = await pool.query(
             'SELECT COUNT(*) as total FROM votes WHERE poll_id = ?',
             [pollId]
@@ -189,7 +149,6 @@ app.post('/api/polls', async (req, res) => {
             multipleVotes = false
         } = req.body;
         
-        // Validation
         if (!question || options.length < 2 || options.length > 10) {
             return res.status(400).json({ 
                 success: false, 
@@ -197,13 +156,11 @@ app.post('/api/polls', async (req, res) => {
             });
         }
         
-        // Calculate end date
         let endsAt = null;
         if (duration > 0) {
             endsAt = new Date(Date.now() + duration * 60 * 60 * 1000);
         }
         
-        // Insert poll
         const [pollResult] = await connection.query(`
             INSERT INTO polls (
                 question, 
@@ -218,7 +175,6 @@ app.post('/api/polls', async (req, res) => {
         
         const pollId = pollResult.insertId;
         
-        // Insert options
         for (let i = 0; i < options.length; i++) {
             await connection.query(`
                 INSERT INTO poll_options (
@@ -259,7 +215,6 @@ app.post('/api/polls/:id/vote', async (req, res) => {
             });
         }
         
-        // Check if poll exists and is active
         const [polls] = await pool.query(
             'SELECT * FROM polls WHERE id = ? AND status = "active"',
             [pollId]
@@ -271,28 +226,10 @@ app.post('/api/polls/:id/vote', async (req, res) => {
         
         const poll = polls[0];
         
-        // Check if poll has ended
         if (poll.ends_at && new Date(poll.ends_at) < new Date()) {
             return res.status(400).json({ success: false, error: 'Poll has ended' });
         }
         
-        // Check if user already voted (if multiple votes not allowed)
-        if (!poll.allow_multiple_votes) {
-            const [existingVotes] = await pool.query(`
-                SELECT v.* FROM votes v
-                JOIN users u ON v.user_id = u.id
-                WHERE v.poll_id = ? AND u.session_id = ?
-            `, [pollId, sessionId]);
-            
-            if (existingVotes.length > 0) {
-                return res.status(400).json({ 
-                    success: false, 
-                    error: 'You have already voted on this poll' 
-                });
-            }
-        }
-        
-        // Get or create user
         let [users] = await pool.query(
             'SELECT id FROM users WHERE session_id = ?',
             [sessionId]
@@ -307,9 +244,22 @@ app.post('/api/polls/:id/vote', async (req, res) => {
             userId = userResult.insertId;
         } else {
             userId = users[0].id;
+            
+            if (!poll.allow_multiple_votes) {
+                const [existingVotes] = await pool.query(
+                    'SELECT id FROM votes WHERE poll_id = ? AND user_id = ?',
+                    [pollId, userId]
+                );
+                
+                if (existingVotes.length > 0) {
+                    return res.status(400).json({ 
+                        success: false, 
+                        error: 'You have already voted on this poll' 
+                    });
+                }
+            }
         }
         
-        // Insert vote
         await pool.query(`
             INSERT INTO votes (poll_id, option_id, user_id, voted_at)
             VALUES (?, ?, ?, NOW())
@@ -390,6 +340,11 @@ app.get('/api/leaderboard', async (req, res) => {
     }
 });
 
+// Catch-all for frontend routes
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../public/index.html'));
+});
+
 // ============================================
 // ERROR HANDLING
 // ============================================
@@ -402,33 +357,37 @@ app.use((err, req, res, next) => {
     });
 });
 
-// 404 handler
-app.use((req, res) => {
-    res.status(404).json({ 
-        success: false, 
-        error: 'Route not found' 
-    });
-});
-
 // ============================================
 // START SERVER
 // ============================================
 
-app.listen(PORT, () => {
-    console.log(`
+async function startServer() {
+    try {
+        await testConnection();
+        
+        app.listen(PORT, () => {
+            console.log(`
 ╔═══════════════════════════════════════╗
 ║   🎪 PollPulse Server Running        ║
 ║   Port: ${PORT}                          ║
 ║   Environment: ${process.env.NODE_ENV || 'development'}            ║
 ║   Database: Connected                 ║
 ╚═══════════════════════════════════════╝
-    `);
-});
+            `);
+        });
+    } catch (error) {
+        console.error('Failed to start server:', error);
+        process.exit(1);
+    }
+}
+
+startServer();
 
 // Graceful shutdown
 process.on('SIGTERM', async () => {
     console.log('SIGTERM received, closing server...');
-    await pool.end();
+    const { closePool } = require('./config/database');
+    await closePool();
     process.exit(0);
 });
 
