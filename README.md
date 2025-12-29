@@ -4,7 +4,6 @@
 
 ![Version](https://img.shields.io/badge/version-1.0.0-blue)
 ![AWS](https://img.shields.io/badge/AWS-Free%20Tier-orange)
-![License](https://img.shields.io/badge/license-Educational-green)
 
 ## 🌟 Project Overview
 
@@ -23,10 +22,10 @@ PollPulse is a modern web application that transforms ordinary polls into engagi
 
 ```
 AWS Cloud
-├── EC2 (t2.micro) - Web Application
-├── RDS MySQL (db.t2.micro) - Vote Storage
-├── S3 - Static Assets
-└── CloudWatch - Monitoring
+├── EC2 (t4.micro)          - Web Application
+├── RDS MySQL (db.t4.micro) - Vote Storage
+├── S3                      - Static Assets
+└── CloudWatch              - Monitoring
 ```
 
 ## 💻 Tech Stack
@@ -73,7 +72,7 @@ pollpulse/
 
 ```bash
 # Clone repository
-git clone https://github.com/YOUR_USERNAME/pollpulse.git
+git clone https://github.com/Asad101001/pollpulse.git
 cd pollpulse
 
 # Install dependencies
@@ -218,14 +217,3 @@ Detailed deployment guide in `docs/deployment-guide.md`
 3. **Business** - Team feedback, surveys
 4. **Social** - Fun community polls
 5. **Research** - Data collection
-
-
-## 📄 License
-
-Educational project - Cloud Computing Capstone 2024
-
-**Status:** 🚀 In Active Development  
-**Last Updated:** December 24, 202  
-
-
----
