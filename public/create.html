@@ -205,6 +205,26 @@
             margin-bottom: var(--space-lg);
             color: var(--color-white);
         }
+
+        .error-message {
+            background: rgba(255, 0, 68, 0.1);
+            border: 1px solid var(--color-red-primary);
+            color: var(--color-red-primary);
+            padding: var(--space-md);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--space-lg);
+            display: none;
+        }
+
+        .success-message {
+            background: rgba(0, 255, 136, 0.1);
+            border: 1px solid #00ff88;
+            color: #00ff88;
+            padding: var(--space-md);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--space-lg);
+            display: none;
+        }
     </style>
 </head>
 
@@ -238,6 +258,9 @@
                     <p>Launch a poll in 60 seconds and watch the magic happen</p>
                 </div>
 
+                <div class="error-message" id="errorMessage"></div>
+                <div class="success-message" id="successMessage"></div>
+
                 <form id="createPollForm">
                     <!-- Question -->
                     <div class="form-group">
@@ -245,9 +268,9 @@
                             Poll Question *
                         </label>
                         <input type="text" id="question" class="form-input" placeholder="What's your question?" required
-                            maxlength="500">
+                            maxlength="500" minlength="5">
                         <small style="color: var(--color-gray-400); font-size: 0.875rem;">
-                            Make it clear and engaging
+                            Make it clear and engaging (minimum 5 characters)
                         </small>
                     </div>
 
@@ -267,11 +290,11 @@
                         </label>
                         <div class="options-container" id="optionsContainer">
                             <div class="option-input-group">
-                                <input type="text" class="form-input" placeholder="Option 1" required>
+                                <input type="text" class="form-input option-input" placeholder="Option 1" required>
                                 <button type="button" class="emoji-btn" onclick="pickEmoji(this)">😊</button>
                             </div>
                             <div class="option-input-group">
-                                <input type="text" class="form-input" placeholder="Option 2" required>
+                                <input type="text" class="form-input option-input" placeholder="Option 2" required>
                                 <button type="button" class="emoji-btn" onclick="pickEmoji(this)">👍</button>
                             </div>
                         </div>
@@ -286,19 +309,20 @@
                             Choose Theme
                         </label>
                         <div class="theme-selector">
-                            <div class="theme-option active" data-theme="default" onclick="selectTheme('default')">
+                            <div class="theme-option active" data-theme="default"
+                                onclick="selectTheme(this, 'default')">
                                 <span class="theme-icon">🎨</span>
                                 <span class="theme-name">Default</span>
                             </div>
-                            <div class="theme-option" data-theme="fire" onclick="selectTheme('fire')">
+                            <div class="theme-option" data-theme="fire" onclick="selectTheme(this, 'fire')">
                                 <span class="theme-icon">🔥</span>
                                 <span class="theme-name">Fire</span>
                             </div>
-                            <div class="theme-option" data-theme="ocean" onclick="selectTheme('ocean')">
+                            <div class="theme-option" data-theme="ocean" onclick="selectTheme(this, 'ocean')">
                                 <span class="theme-icon">🌊</span>
                                 <span class="theme-name">Ocean</span>
                             </div>
-                            <div class="theme-option" data-theme="neon" onclick="selectTheme('neon')">
+                            <div class="theme-option" data-theme="neon" onclick="selectTheme(this, 'neon')">
                                 <span class="theme-icon">⚡</span>
                                 <span class="theme-name">Neon</span>
                             </div>
@@ -325,7 +349,7 @@
                         <label class="form-label">Settings</label>
                         <div style="display: flex; flex-direction: column; gap: var(--space-md);">
                             <label style="display: flex; align-items: center; gap: var(--space-md); cursor: pointer;">
-                                <input type="checkbox" id="showResults">
+                                <input type="checkbox" id="showResults" checked>
                                 <span>Show results before voting</span>
                             </label>
                             <label style="display: flex; align-items: center; gap: var(--space-md); cursor: pointer;">
@@ -341,7 +365,7 @@
                             onclick="window.location.href='index.html'">
                             Cancel
                         </button>
-                        <button type="submit" class="btn btn-primary" style="flex: 2;">
+                        <button type="submit" class="btn btn-primary" id="submitBtn" style="flex: 2;">
                             <span>🚀</span>
                             <span>Launch Poll</span>
                         </button>
@@ -361,14 +385,30 @@
         </div>
     </div>
 
+    <script src="js/app.js"></script>
     <script>
         let optionCount = 2;
         const maxOptions = 10;
         let selectedTheme = 'default';
 
+        function showError(message) {
+            const errorEl = document.getElementById('errorMessage');
+            errorEl.textContent = message;
+            errorEl.style.display = 'block';
+            setTimeout(() => {
+                errorEl.style.display = 'none';
+            }, 5000);
+        }
+
+        function showSuccess(message) {
+            const successEl = document.getElementById('successMessage');
+            successEl.textContent = message;
+            successEl.style.display = 'block';
+        }
+
         function addOption() {
             if (optionCount >= maxOptions) {
-                alert('Maximum 10 options allowed');
+                showError('Maximum 10 options allowed');
                 return;
             }
 
@@ -377,106 +417,186 @@
             const newOption = document.createElement('div');
             newOption.className = 'option-input-group';
             newOption.innerHTML = `
-                <input type="text" class="form-input" placeholder="Option ${optionCount}" required>
+                <input type="text" class="form-input option-input" placeholder="Option ${optionCount}" required>
                 <button type="button" class="emoji-btn" onclick="pickEmoji(this)">😊</button>
                 <button type="button" class="remove-btn" onclick="removeOption(this)">×</button>
             `;
             container.appendChild(newOption);
+            updatePreview();
         }
 
         function removeOption(btn) {
             if (optionCount <= 2) {
-                alert('Minimum 2 options required');
+                showError('Minimum 2 options required');
                 return;
             }
             btn.parentElement.remove();
             optionCount--;
+            updatePreview();
         }
 
         function pickEmoji(btn) {
-            const emojis = ['😊', '👍', '❤️', '🔥', '⭐', '🎉', '✅', '❌', '🤔', '💡'];
+            const emojis = ['😊', '👍', '❤️', '🔥', '⭐', '🎉', '✅', '❌', '🤔', '💡', '📊', '🎯', '💪', '🌟', '🚀'];
             const currentIndex = emojis.indexOf(btn.textContent);
             const nextIndex = (currentIndex + 1) % emojis.length;
             btn.textContent = emojis[nextIndex];
+            updatePreview();
         }
 
-        function selectTheme(theme) {
+        function selectTheme(element, theme) {
             selectedTheme = theme;
             document.querySelectorAll('.theme-option').forEach(opt => {
                 opt.classList.remove('active');
             });
-            event.target.closest('.theme-option').classList.add('active');
+            element.classList.add('active');
         }
 
-        document.getElementById('createPollForm').addEventListener('submit', function (e) {
+        // Form submission with actual API call
+        document.getElementById('createPollForm').addEventListener('submit', async function (e) {
             e.preventDefault();
 
-            // Collect form data
-            const question = document.getElementById('question').value;
-            const description = document.getElementById('description').value;
-            const duration = document.getElementById('duration').value;
-            const showResults = document.getElementById('showResults').checked;
-            const multipleVotes = document.getElementById('multipleVotes').checked;
+            const submitBtn = document.getElementById('submitBtn');
+            const originalHTML = submitBtn.innerHTML;
 
-            const options = [];
-            document.querySelectorAll('.option-input-group input').forEach((input, index) => {
-                const emoji = input.parentElement.querySelector('.emoji-btn').textContent;
-                options.push({
-                    text: input.value,
-                    emoji: emoji
+            // Show loading state
+            submitBtn.innerHTML = '<span>⏳</span><span>Creating...</span>';
+            submitBtn.disabled = true;
+
+            try {
+                // Collect form data
+                const question = document.getElementById('question').value.trim();
+                const description = document.getElementById('description').value.trim();
+                const duration = parseInt(document.getElementById('duration').value);
+                const showResults = document.getElementById('showResults').checked;
+                const multipleVotes = document.getElementById('multipleVotes').checked;
+
+                // Collect options
+                const options = [];
+                document.querySelectorAll('.option-input').forEach((input) => {
+                    const text = input.value.trim();
+                    if (text) {
+                        const emoji = input.parentElement.querySelector('.emoji-btn').textContent;
+                        options.push({
+                            text: text,
+                            emoji: emoji
+                        });
+                    }
                 });
-            });
 
-            const pollData = {
-                question,
-                description,
-                options,
-                theme: selectedTheme,
-                duration: parseInt(duration),
-                showResults,
-                multipleVotes
-            };
+                // Client-side validation
+                if (!question || question.length < 5) {
+                    throw new Error('Question must be at least 5 characters long');
+                }
 
-            console.log('Creating poll:', pollData);
+                if (options.length < 2) {
+                    throw new Error('Please provide at least 2 options');
+                }
 
-            // TODO: Send to backend API
-            // For now, show success and redirect
-            alert('Poll created successfully! 🎉');
-            // window.location.href = 'vote.html?id=1';
+                if (options.length > 10) {
+                    throw new Error('Maximum 10 options allowed');
+                }
+
+                // Prepare poll data
+                const pollData = {
+                    question: question,
+                    description: description,
+                    options: options,
+                    theme: selectedTheme,
+                    duration: duration,
+                    showResults: showResults,
+                    multipleVotes: multipleVotes
+                };
+
+                console.log('Creating poll with data:', pollData);
+
+                // Send to API
+                const response = await fetch('/api/polls', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(pollData)
+                });
+
+                const data = await response.json();
+                console.log('API response:', data);
+
+                if (data.success && data.pollId) {
+                    // Success!
+                    showSuccess('🎉 Poll created successfully! Redirecting...');
+
+                    // Show confetti if available
+                    if (typeof createConfetti === 'function') {
+                        createConfetti();
+                    }
+
+                    // Redirect after short delay
+                    setTimeout(() => {
+                        window.location.href = `vote.html?id=${data.pollId}`;
+                    }, 1500);
+                } else {
+                    throw new Error(data.error || 'Failed to create poll');
+                }
+
+            } catch (error) {
+                console.error('Error creating poll:', error);
+                showError('❌ ' + error.message);
+
+                // Reset button
+                submitBtn.innerHTML = originalHTML;
+                submitBtn.disabled = false;
+            }
         });
 
         // Live preview update
         document.getElementById('question').addEventListener('input', updatePreview);
+        document.querySelectorAll('.option-input').forEach(input => {
+            input.addEventListener('input', updatePreview);
+        });
 
         function updatePreview() {
             const question = document.getElementById('question').value;
             const preview = document.getElementById('livePreview');
 
             if (question) {
+                const options = Array.from(document.querySelectorAll('.option-input'))
+                    .map((input, i) => {
+                        const emoji = input.parentElement.querySelector('.emoji-btn').textContent;
+                        const text = input.value || `Option ${i + 1}`;
+                        return { text, emoji };
+                    });
+
                 preview.innerHTML = `
                     <div class="poll-card">
-                        <h3 style="font-size: 1.5rem; margin-bottom: var(--space-lg);">${question}</h3>
+                        <h3 style="font-size: 1.5rem; margin-bottom: var(--space-lg); color: var(--color-white);">${escapeHtml(question)}</h3>
                         <div class="poll-options">
-                            ${Array.from(document.querySelectorAll('.option-input-group input'))
-                        .map((input, i) => {
-                            const emoji = input.parentElement.querySelector('.emoji-btn').textContent;
-                            return `
-                                        <div class="poll-option">
-                                            <div class="option-content">
-                                                <div class="option-text">
-                                                    <span class="option-emoji">${emoji}</span>
-                                                    <span>${input.value || `Option ${i + 1}`}</span>
-                                                </div>
-                                                <div class="option-percentage">0%</div>
-                                            </div>
+                            ${options.map(option => `
+                                <div class="poll-option" style="margin-bottom: var(--space-md); padding: var(--space-md); background: rgba(255,255,255,0.05); border-radius: var(--radius-md);">
+                                    <div class="option-content" style="display: flex; justify-content: space-between; align-items: center;">
+                                        <div class="option-text">
+                                            <span class="option-emoji" style="font-size: 1.5rem; margin-right: var(--space-sm);">${option.emoji}</span>
+                                            <span style="color: var(--color-white);">${escapeHtml(option.text)}</span>
                                         </div>
-                                    `;
-                        }).join('')}
+                                        <div class="option-percentage" style="color: var(--color-gray-400);">0%</div>
+                                    </div>
+                                </div>
+                            `).join('')}
                         </div>
                     </div>
                 `;
+            } else {
+                preview.innerHTML = '<p style="color: var(--color-gray-400); text-align: center;">Your poll preview will appear here as you type</p>';
             }
         }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Initialize preview
+        updatePreview();
     </script>
 </body>
 

@@ -1,6 +1,6 @@
 // ============================================
-// POLLPULSE - FRONTEND APPLICATION
-// Main JavaScript file
+// POLLPULSE - FRONTEND APPLICATION (ENHANCED)
+// Main JavaScript file with improved error handling
 // ============================================
 
 const API_BASE_URL = window.location.hostname === 'localhost' 
@@ -26,6 +26,8 @@ function getSessionId() {
 
 async function apiRequest(endpoint, options = {}) {
     try {
+        console.log(`API Request: ${endpoint}`, options);
+        
         const response = await fetch(`${API_BASE_URL}${endpoint}`, {
             headers: {
                 'Content-Type': 'application/json',
@@ -35,9 +37,10 @@ async function apiRequest(endpoint, options = {}) {
         });
         
         const data = await response.json();
+        console.log(`API Response:`, data);
         
         if (!response.ok) {
-            throw new Error(data.error || 'Request failed');
+            throw new Error(data.error || `Request failed with status ${response.status}`);
         }
         
         return data;
@@ -60,6 +63,7 @@ async function fetchPoll(pollId) {
 
 // Create poll
 async function createPoll(pollData) {
+    console.log('Creating poll with data:', pollData);
     return apiRequest('/polls', {
         method: 'POST',
         body: JSON.stringify(pollData)
@@ -92,22 +96,31 @@ async function fetchLeaderboard(type = 'voters', limit = 10) {
 // ============================================
 
 function showToast(message, type = 'info') {
+    console.log(`Toast: ${type} - ${message}`);
+    
     const toast = document.createElement('div');
     toast.className = `toast toast-${type}`;
     toast.textContent = message;
+    
+    const colors = {
+        error: '#ff0044',
+        success: '#00ff88',
+        info: '#667eea'
+    };
     
     toast.style.cssText = `
         position: fixed;
         top: 20px;
         right: 20px;
         padding: 16px 24px;
-        background: ${type === 'error' ? '#ff0044' : type === 'success' ? '#00ff88' : '#fff'};
-        color: ${type === 'info' ? '#0a0a0a' : '#fff'};
+        background: ${colors[type] || colors.info};
+        color: #fff;
         border-radius: 12px;
         font-weight: 600;
         z-index: 10000;
         animation: toastSlideIn 0.3s ease-out;
         box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        max-width: 400px;
     `;
     
     document.body.appendChild(toast);
@@ -115,13 +128,13 @@ function showToast(message, type = 'info') {
     setTimeout(() => {
         toast.style.animation = 'toastSlideOut 0.3s ease-out';
         setTimeout(() => toast.remove(), 300);
-    }, 3000);
+    }, 4000);
 }
 
 function showLoading(element) {
     element.innerHTML = `
         <div style="text-align: center; padding: 40px;">
-            <div class="spinner"></div>
+            <div class="spinner" style="width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.1); border-top-color: #ff0044; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto;"></div>
             <p style="color: var(--color-gray-400); margin-top: 16px;">Loading...</p>
         </div>
     `;
@@ -150,7 +163,7 @@ function renderPollCard(poll) {
     const totalVotes = poll.vote_count || 0;
     
     return `
-        <div class="poll-card animate-fadeInUp" onclick="window.location.href='vote.html?id=${poll.id}'">
+        <div class="poll-card animate-fadeInUp" onclick="window.location.href='vote.html?id=${poll.id}'" style="cursor: pointer;">
             <div class="poll-header">
                 <div class="poll-badge">
                     <div class="live-dot"></div>
@@ -170,7 +183,7 @@ function renderPollCard(poll) {
                             <div class="option-percentage">${option.percentage || 0}%</div>
                         </div>
                     </div>
-                `).join('') : ''}
+                `).join('') : '<p>No options available</p>'}
             </div>
         </div>
     `;
@@ -187,7 +200,7 @@ function escapeHtml(text) {
 // ============================================
 
 function createConfetti() {
-    const colors = ['#ff0044', '#ffffff', '#ff3366', '#ff6688'];
+    const colors = ['#ff0044', '#ffffff', '#ff3366', '#ff6688', '#667eea'];
     const confettiCount = 50;
     
     for (let i = 0; i < confettiCount; i++) {
@@ -211,6 +224,46 @@ function createConfetti() {
             setTimeout(() => confetti.remove(), 5000);
         }, i * 30);
     }
+}
+
+// Add confetti animation CSS
+if (!document.getElementById('confetti-style')) {
+    const style = document.createElement('style');
+    style.id = 'confetti-style';
+    style.textContent = `
+        @keyframes confettiFall {
+            to {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+        @keyframes toastSlideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        @keyframes toastSlideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
+    `;
+    document.head.appendChild(style);
 }
 
 // ============================================
@@ -310,14 +363,16 @@ function markAsVoted(pollId) {
 function shareToTwitter(text, url) {
     window.open(
         `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`,
-        '_blank'
+        '_blank',
+        'width=550,height=420'
     );
 }
 
 function shareToFacebook(url) {
     window.open(
         `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
-        '_blank'
+        '_blank',
+        'width=550,height=420'
     );
 }
 
@@ -333,7 +388,18 @@ async function copyToClipboard(text) {
         await navigator.clipboard.writeText(text);
         showToast('Link copied to clipboard! 📋', 'success');
     } catch (error) {
-        showToast('Failed to copy link', 'error');
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        document.body.appendChild(textArea);
+        textArea.select();
+        try {
+            document.execCommand('copy');
+            showToast('Link copied to clipboard! 📋', 'success');
+        } catch (err) {
+            showToast('Failed to copy link', 'error');
+        }
+        document.body.removeChild(textArea);
     }
 }
 
@@ -343,9 +409,11 @@ async function copyToClipboard(text) {
 
 document.addEventListener('DOMContentLoaded', () => {
     console.log('PollPulse initialized');
+    console.log('API Base URL:', API_BASE_URL);
     
     // Initialize session
-    getSessionId();
+    const sessionId = getSessionId();
+    console.log('Session ID:', sessionId);
     
     // Add smooth scroll
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
@@ -382,7 +450,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ============================================
-// EXPORT FUNCTIONS
+// EXPORT FUNCTIONS (Global scope)
 // ============================================
 
 window.PollPulse = {
@@ -395,6 +463,7 @@ window.PollPulse = {
     renderPollCard,
     createConfetti,
     showToast,
+    showLoading,
     startRealtimeUpdates,
     stopRealtimeUpdates,
     hasVoted,
@@ -402,5 +471,13 @@ window.PollPulse = {
     shareToTwitter,
     shareToFacebook,
     shareToWhatsApp,
-    copyToClipboard
+    copyToClipboard,
+    validatePollForm,
+    escapeHtml,
+    formatNumber,
+    timeAgo
 };
+
+// Also export individual functions to global scope for inline onclick handlers
+window.createConfetti = createConfetti;
+window.showToast = showToast;
