@@ -268,6 +268,116 @@
     </div>
 
     <script>
+        let allPolls = [];
+
+        // Load polls on page load
+        window.addEventListener('DOMContentLoaded', async () => {
+            console.log('Loading polls from API...');
+            await loadPolls();
+        });
+
+        async function loadPolls() {
+            const pollsGrid = document.getElementById('pollsGrid');
+
+            try {
+                pollsGrid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: rgba(255,255,255,0.6);">Loading polls...</div>';
+
+                console.log('Fetching from /api/polls...');
+                const response = await fetch('/api/polls');
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log('API Response:', data);
+
+                if (!data.success || !data.polls) {
+                    throw new Error('Invalid response format');
+                }
+
+                allPolls = data.polls;
+                console.log(`Loaded ${allPolls.length} polls`);
+
+                if (allPolls.length === 0) {
+                    pollsGrid.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📭</div>
+                            <h2>No polls yet</h2>
+                            <p>Be the first to create a poll!</p>
+                            <button class="btn btn-primary" onclick="window.location.href='create.html'">
+                                Create First Poll
+                            </button>
+                        </div>
+                    `;
+                    return;
+                }
+
+                displayPolls(allPolls);
+
+            } catch (error) {
+                console.error('Error loading polls:', error);
+                pollsGrid.innerHTML = `
+                    <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #ef4444;">
+                        <h3>⚠️ Error Loading Polls</h3>
+                        <p>${error.message}</p>
+                        <button onclick="loadPolls()" class="btn btn-primary" style="margin-top: 20px;">
+                            Retry
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
+        function displayPolls(polls) {
+            const pollsGrid = document.getElementById('pollsGrid');
+            const pollsCount = document.getElementById('pollsCount');
+
+            pollsCount.innerHTML = `Showing <strong>${polls.length}</strong> poll${polls.length !== 1 ? 's' : ''}`;
+
+            const pollsHTML = polls.map((poll, index) => {
+                const voteCount = poll.vote_count || 0;
+                const delay = (index % 3) * 100;
+
+                return `
+                    <div class="poll-card animate-fadeInUp delay-${delay}" onclick="window.location.href='vote.html?id=${poll.id}'">
+                        <div class="poll-header">
+                            <div class="poll-badge">
+                                <div class="live-dot"></div>
+                                <span>${voteCount > 100 ? 'VIRAL' : voteCount > 50 ? 'HOT' : 'NEW'}</span>
+                            </div>
+                            <div class="poll-votes">${voteCount.toLocaleString()} vote${voteCount !== 1 ? 's' : ''}</div>
+                        </div>
+                        <div class="poll-question">${escapeHtml(poll.question)}</div>
+                        <div class="poll-meta" style="color: var(--color-gray-400); font-size: 0.9rem; margin-top: 10px;">
+                            Created ${formatDate(poll.created_at)}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            pollsGrid.innerHTML = pollsHTML;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diff = now - date;
+            const hours = Math.floor(diff / 3600000);
+
+            if (hours < 1) return 'just now';
+            if (hours < 24) return `${hours}h ago`;
+            const days = Math.floor(hours / 24);
+            if (days < 7) return `${days}d ago`;
+            return date.toLocaleDateString();
+        }
+
         // Filter functionality
         document.querySelectorAll('.filter-btn').forEach(btn => {
             btn.addEventListener('click', function () {
@@ -276,24 +386,33 @@
 
                 const filter = this.dataset.filter;
                 console.log('Filtering by:', filter);
-                // TODO: Fetch and display filtered polls
+
+                let filtered = [...allPolls];
+
+                if (filter === 'trending') {
+                    filtered.sort((a, b) => (b.vote_count || 0) - (a.vote_count || 0));
+                } else if (filter === 'new') {
+                    filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+                } else if (filter === 'popular') {
+                    filtered = filtered.filter(p => (p.vote_count || 0) > 10);
+                }
+
+                displayPolls(filtered);
             });
         });
 
         // Search functionality
         document.getElementById('searchInput').addEventListener('input', function (e) {
             const query = e.target.value.toLowerCase();
-            console.log('Searching for:', query);
-            // TODO: Filter polls by search query
-        });
-
-        // Poll option width animation
-        document.querySelectorAll('.poll-option').forEach(option => {
-            const width = option.style.getPropertyValue('--width') || '0%';
-            option.style.setProperty('--width', width);
-            option.querySelector('::before').style.width = width;
+            const filtered = allPolls.filter(poll =>
+                poll.question.toLowerCase().includes(query)
+            );
+            displayPolls(filtered);
         });
     </script>
+</body>
+
+</html>
 </body>
 
 </html>

@@ -331,6 +331,93 @@
             document.getElementById('totalVotes').textContent = newVotes.toLocaleString();
         }, 5000);
     </script>
+
+    <script>
+        // Load trending polls dynamically
+        async function loadTrendingPolls() {
+            const trendingGrid = document.getElementById('trendingPollsGrid');
+
+            try {
+                console.log('Fetching trending polls...');
+                const response = await fetch('/api/polls?limit=6');
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log('Trending polls data:', data);
+
+                if (!data.success || !data.polls) {
+                    throw new Error('Invalid response format');
+                }
+
+                let polls = data.polls;
+
+                // Sort by vote count (trending)
+                polls.sort((a, b) => (b.vote_count || 0) - (a.vote_count || 0));
+
+                // Take top 6
+                const trendingPolls = polls.slice(0, 6);
+
+                if (trendingPolls.length === 0) {
+                    trendingGrid.innerHTML = `
+                        <div style="grid-column: 1/-1; text-align: center; padding: 40px;">
+                            <p style="color: rgba(255,255,255,0.6); margin-bottom: 20px;">No polls yet</p>
+                            <button class="btn btn-primary" onclick="window.location.href='create.html'">
+                                Create First Poll
+                            </button>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Display trending polls
+                trendingGrid.innerHTML = trendingPolls.map((poll, index) => {
+                    const voteCount = poll.vote_count || 0;
+                    const delay = (index % 3) * 200;
+
+                    return `
+                        <div class="poll-card animate-fadeInUp delay-${delay}" onclick="window.location.href='vote.html?id=${poll.id}'" style="cursor: pointer;">
+                            <div class="poll-header">
+                                <div class="poll-badge">
+                                    <div class="live-dot"></div>
+                                    <span>🔥 TRENDING</span>
+                                </div>
+                                <div class="poll-votes">${voteCount} vote${voteCount !== 1 ? 's' : ''}</div>
+                            </div>
+                            <div class="poll-question">${escapeHtml(poll.question)}</div>
+                            ${poll.description ? `<p style="color: var(--color-gray-400); font-size: 0.9rem; margin-top: 8px;">${escapeHtml(poll.description.substring(0, 80))}${poll.description.length > 80 ? '...' : ''}</p>` : ''}
+                        </div>
+                    `;
+                }).join('');
+
+                console.log(`Displayed ${trendingPolls.length} trending polls`);
+
+            } catch (error) {
+                console.error('Error loading trending polls:', error);
+                trendingGrid.innerHTML = `
+                    <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #ef4444;">
+                        <p>⚠️ Error loading polls</p>
+                        <button onclick="loadTrendingPolls()" class="btn btn-primary" style="margin-top: 15px;">
+                            Retry
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Load on page load
+        window.addEventListener('DOMContentLoaded', loadTrendingPolls);
+    </script>
+
+
 </body>
 
 </html>
