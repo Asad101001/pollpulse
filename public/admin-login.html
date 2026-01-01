@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - PollPulse</title>
+    <link rel="stylesheet" href="css/main.css">
+    <style>
+        .login-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: var(--space-xl);
+        }
+
+        .login-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-2xl);
+            padding: var(--space-3xl);
+            max-width: 450px;
+            width: 100%;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: var(--space-2xl);
+        }
+
+        .login-header h1 {
+            font-size: 2rem;
+            margin-bottom: var(--space-md);
+            color: var(--color-white);
+        }
+
+        .login-header p {
+            color: var(--color-gray-400);
+        }
+
+        .form-group {
+            margin-bottom: var(--space-xl);
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: var(--space-sm);
+            color: var(--color-white);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: var(--space-md) var(--space-lg);
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid var(--glass-border);
+            border-radius: var(--radius-md);
+            color: var(--color-white);
+            font-size: 1rem;
+            transition: var(--transition-base);
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--color-red-primary);
+            background: rgba(255, 0, 68, 0.05);
+        }
+
+        .error-message {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid #ef4444;
+            color: #ef4444;
+            padding: var(--space-md);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--space-lg);
+            display: none;
+        }
+
+        .login-button {
+            width: 100%;
+            padding: var(--space-lg);
+            font-size: 1.125rem;
+        }
+
+        .back-link {
+            text-align: center;
+            margin-top: var(--space-xl);
+        }
+
+        .back-link a {
+            color: var(--color-gray-400);
+            text-decoration: none;
+            transition: var(--transition-base);
+        }
+
+        .back-link a:hover {
+            color: var(--color-white);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="bg-animated"></div>
+    <div class="shape shape-1"></div>
+    <div class="shape shape-2"></div>
+    <div class="shape shape-3"></div>
+
+    <div class="login-container">
+        <div class="login-card animate-fadeInUp">
+            <div class="login-header">
+                <h1>🔐 Admin Login</h1>
+                <p>Access poll management dashboard</p>
+            </div>
+
+            <div class="error-message" id="errorMessage"></div>
+
+            <form id="loginForm">
+                <div class="form-group">
+                    <label class="form-label" for="username">Username</label>
+                    <input type="text" id="username" class="form-input" required autocomplete="username">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="password">Password</label>
+                    <input type="password" id="password" class="form-input" required autocomplete="current-password">
+                </div>
+
+                <button type="submit" class="btn btn-primary login-button" id="loginButton">
+                    <span>🔓</span>
+                    <span>Login</span>
+                </button>
+            </form>
+
+            <div class="back-link">
+                <a href="index.html">← Back to Home</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Check if already logged in
+        const adminSession = localStorage.getItem('pollpulse_admin_session');
+        if (adminSession) {
+            // Verify session is still valid
+            fetch('/api/admin/check', {
+                headers: {
+                    'X-Admin-Session': adminSession
+                }
+            })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.href = 'manage.html';
+                    } else {
+                        localStorage.removeItem('pollpulse_admin_session');
+                    }
+                });
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const loginButton = document.getElementById('loginButton');
+            const errorMessage = document.getElementById('errorMessage');
+
+            errorMessage.style.display = 'none';
+            loginButton.disabled = true;
+            loginButton.innerHTML = '<span>⏳</span><span>Logging in...</span>';
+
+            try {
+                const response = await fetch('/api/admin/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+
+                if (data.success && data.sessionId) {
+                    // Store session
+                    localStorage.setItem('pollpulse_admin_session', data.sessionId);
+
+                    // Redirect to management page
+                    window.location.href = 'manage.html';
+                } else {
+                    throw new Error(data.error || 'Login failed');
+                }
+
+            } catch (error) {
+                console.error('Login error:', error);
+                errorMessage.textContent = '❌ ' + error.message;
+                errorMessage.style.display = 'block';
+                loginButton.disabled = false;
+                loginButton.innerHTML = '<span>🔓</span><span>Login</span>';
+            }
+        });
+    </script>
+</body>
+
+</html>

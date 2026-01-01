@@ -41,6 +41,185 @@ app.get('/api/health', (req, res) => {
     });
 });
 
+const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'asad';
+
+// Simple session storage (in production, use Redis)
+const adminSessions = new Map();
+
+// Middleware to check admin authentication
+function requireAdmin(req, res, next) {
+    const sessionId = req.headers['x-admin-session'];
+    
+    if (!sessionId || !adminSessions.has(sessionId)) {
+        return res.status(401).json({ 
+            success: false, 
+            error: 'Unauthorized - Admin access required' 
+        });
+    }
+    
+    const session = adminSessions.get(sessionId);
+    if (Date.now() - session.timestamp > 24 * 60 * 60 * 1000) { // 24 hours
+        adminSessions.delete(sessionId);
+        return res.status(401).json({ 
+            success: false, 
+            error: 'Session expired' 
+        });
+    }
+    
+    // Refresh session
+    session.timestamp = Date.now();
+    next();
+}
+
+// Admin login
+app.post('/api/admin/login', (req, res) => {
+    const { username, password } = req.body;
+    
+    if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+        const sessionId = 'admin_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        adminSessions.set(sessionId, {
+            username,
+            timestamp: Date.now()
+        });
+        
+        res.json({
+            success: true,
+            sessionId,
+            message: 'Login successful'
+        });
+    } else {
+        res.status(401).json({
+            success: false,
+            error: 'Invalid credentials'
+        });
+    }
+});
+
+// Admin logout
+app.post('/api/admin/logout', (req, res) => {
+    const sessionId = req.headers['x-admin-session'];
+    if (sessionId) {
+        adminSessions.delete(sessionId);
+    }
+    res.json({ success: true, message: 'Logged out' });
+});
+
+// Check admin session
+app.get('/api/admin/check', requireAdmin, (req, res) => {
+    res.json({ success: true, authenticated: true });
+});
+
+// ============================================
+// PROTECTED ADMIN ROUTES
+// ============================================
+
+// Delete poll (protected)
+app.delete('/api/admin/polls/:id', requireAdmin, async (req, res) => {
+    const connection = await pool.getConnection();
+    
+    try {
+        const pollId = req.params.id;
+        
+        const [polls] = await connection.query(
+            'SELECT id FROM polls WHERE id = ?',
+            [pollId]
+        );
+        
+        if (polls.length === 0) {
+            return res.status(404).json({ 
+                success: false, 
+                error: 'Poll not found' 
+            });
+        }
+        
+        await connection.beginTransaction();
+        
+        await connection.query('DELETE FROM votes WHERE poll_id = ?', [pollId]);
+        await connection.query('DELETE FROM poll_options WHERE poll_id = ?', [pollId]);
+        await connection.query('DELETE FROM polls WHERE id = ?', [pollId]);
+        
+        await connection.commit();
+        
+        console.log(`Admin deleted poll ${pollId}`);
+        
+        res.json({ 
+            success: true, 
+            message: 'Poll deleted successfully' 
+        });
+        
+    } catch (error) {
+        await connection.rollback();
+        console.error('Error deleting poll:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Failed to delete poll' 
+        });
+    } finally {
+        connection.release();
+    }
+});
+
+// Get all polls (including ended) - protected
+app.get('/api/admin/polls', requireAdmin, async (req, res) => {
+    try {
+        const [polls] = await pool.query(`
+            SELECT 
+                p.id,
+                p.question,
+                p.description,
+                p.theme,
+                p.created_at,
+                p.ends_at,
+                p.status,
+                COUNT(v.id) as vote_count
+            FROM polls p
+            LEFT JOIN votes v ON p.id = v.poll_id
+            GROUP BY p.id
+            ORDER BY p.created_at DESC
+        `);
+        
+        res.json({ success: true, polls });
+    } catch (error) {
+        console.error('Error fetching admin polls:', error);
+        res.status(500).json({ success: false, error: 'Failed to fetch polls' });
+    }
+});
+
+// Update poll status
+app.patch('/api/admin/polls/:id/status', requireAdmin, async (req, res) => {
+    try {
+        const pollId = req.params.id;
+        const { status } = req.body;
+        
+        if (!['active', 'ended'].includes(status)) {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'Invalid status' 
+            });
+        }
+        
+        await pool.query(
+            'UPDATE polls SET status = ? WHERE id = ?',
+            [status, pollId]
+        );
+        
+        console.log(`Admin updated poll ${pollId} status to ${status}`);
+        
+        res.json({ 
+            success: true, 
+            message: 'Poll status updated' 
+        });
+        
+    } catch (error) {
+        console.error('Error updating poll status:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Failed to update poll status' 
+        });
+    }
+});
+
 // Get all polls
 app.get('/api/polls', async (req, res) => {
     try {
@@ -129,6 +308,85 @@ app.get('/api/polls/:id', async (req, res) => {
     } catch (error) {
         console.error('Error fetching poll:', error);
         res.status(500).json({ success: false, error: 'Failed to fetch poll' });
+    }
+});
+
+app.delete('/api/polls/:id', async (req, res) => {
+    const connection = await pool.getConnection();
+    
+    try {
+        const pollId = req.params.id;
+        
+        // Check if poll exists
+        const [polls] = await connection.query(
+            'SELECT id FROM polls WHERE id = ?',
+            [pollId]
+        );
+        
+        if (polls.length === 0) {
+            return res.status(404).json({ 
+                success: false, 
+                error: 'Poll not found' 
+            });
+        }
+        
+        await connection.beginTransaction();
+        
+        // Delete in order: votes -> poll_options -> polls
+        await connection.query('DELETE FROM votes WHERE poll_id = ?', [pollId]);
+        await connection.query('DELETE FROM poll_options WHERE poll_id = ?', [pollId]);
+        await connection.query('DELETE FROM polls WHERE id = ?', [pollId]);
+        
+        await connection.commit();
+        
+        console.log(`Poll ${pollId} deleted successfully`);
+        
+        res.json({ 
+            success: true, 
+            message: 'Poll deleted successfully' 
+        });
+        
+    } catch (error) {
+        await connection.rollback();
+        console.error('Error deleting poll:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Failed to delete poll' 
+        });
+    } finally {
+        connection.release();
+    }
+});
+
+// Update poll status (end poll early)
+app.patch('/api/polls/:id/status', async (req, res) => {
+    try {
+        const pollId = req.params.id;
+        const { status } = req.body;
+        
+        if (!['active', 'ended'].includes(status)) {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'Invalid status' 
+            });
+        }
+        
+        await pool.query(
+            'UPDATE polls SET status = ? WHERE id = ?',
+            [status, pollId]
+        );
+        
+        res.json({ 
+            success: true, 
+            message: 'Poll status updated' 
+        });
+        
+    } catch (error) {
+        console.error('Error updating poll status:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Failed to update poll status' 
+        });
     }
 });
 
