@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Activity - PollPulse</title>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/animations.css">
+    <link rel="stylesheet" href="css/components.css">
+    <style>
+        .activity-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: var(--space-2xl) 0;
+        }
+
+        .stats-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: var(--space-lg);
+            margin-bottom: var(--space-2xl);
+        }
+
+        .stat-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-xl);
+            padding: var(--space-xl);
+            text-align: center;
+        }
+
+        .stat-icon {
+            font-size: 3rem;
+            margin-bottom: var(--space-md);
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: var(--color-red-primary);
+            margin-bottom: var(--space-sm);
+        }
+
+        .stat-label {
+            color: var(--color-gray-400);
+            font-size: 0.875rem;
+        }
+
+        .activity-feed {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-xl);
+            padding: var(--space-xl);
+        }
+
+        .activity-item {
+            display: flex;
+            gap: var(--space-lg);
+            padding: var(--space-lg);
+            border-bottom: 1px solid var(--glass-border);
+            transition: var(--transition-base);
+        }
+
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+
+        .activity-item:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .activity-icon {
+            font-size: 2rem;
+            flex-shrink: 0;
+        }
+
+        .activity-content {
+            flex: 1;
+        }
+
+        .activity-action {
+            font-weight: 600;
+            color: var(--color-white);
+            margin-bottom: var(--space-xs);
+        }
+
+        .activity-details {
+            color: var(--color-gray-400);
+            font-size: 0.875rem;
+        }
+
+        .activity-time {
+            color: var(--color-gray-500);
+            font-size: 0.75rem;
+            white-space: nowrap;
+        }
+
+        .filter-tabs {
+            display: flex;
+            gap: var(--space-md);
+            margin-bottom: var(--space-xl);
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: var(--space-md) var(--space-lg);
+            background: var(--glass-bg);
+            border: 2px solid var(--glass-border);
+            border-radius: var(--radius-md);
+            color: var(--color-white);
+            cursor: pointer;
+            transition: var(--transition-base);
+        }
+
+        .filter-btn.active {
+            background: var(--color-red-primary);
+            border-color: var(--color-red-primary);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px;
+            color: var(--color-gray-400);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="bg-animated"></div>
+    <div class="shape shape-1"></div>
+    <div class="shape shape-2"></div>
+    <div class="shape shape-3"></div>
+
+    <div class="container">
+        <nav>
+            <a href="index.html" class="logo">
+                <span class="logo-icon">🎪</span>
+                <span>PollPulse</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="explore.html">Explore</a></li>
+                <li><a href="create.html">Create</a></li>
+                <li><a href="activity.html" class="active">Activity</a></li>
+                <li><a href="leaderboard.html">Leaderboard</a></li>
+            </ul>
+            <button class="btn btn-primary" onclick="window.location.href='create.html'">
+                <span>✨</span>
+                <span>Create Poll</span>
+            </button>
+        </nav>
+
+        <div class="activity-container">
+            <div class="section-header animate-fadeInDown">
+                <h1 class="section-title">📊 Activity Dashboard</h1>
+                <p class="section-subtitle">Real-time user activity and statistics</p>
+            </div>
+
+            <div class="stats-cards animate-fadeInUp">
+                <div class="stat-card">
+                    <div class="stat-icon">👥</div>
+                    <div class="stat-value" id="activeUsers">-</div>
+                    <div class="stat-label">Active Users (5 min)</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">🗳️</div>
+                    <div class="stat-value" id="todayVotes">-</div>
+                    <div class="stat-label">Votes Today</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">📊</div>
+                    <div class="stat-value" id="activePolls">-</div>
+                    <div class="stat-label">Active Polls</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">🔥</div>
+                    <div class="stat-value" id="activityRate">-</div>
+                    <div class="stat-label">Actions/Hour</div>
+                </div>
+            </div>
+
+            <div class="filter-tabs animate-fadeInUp delay-200">
+                <button class="filter-btn active" data-filter="all" onclick="filterActivity('all')">
+                    All Activity
+                </button>
+                <button class="filter-btn" data-filter="votes" onclick="filterActivity('votes')">
+                    Votes
+                </button>
+                <button class="filter-btn" data-filter="polls" onclick="filterActivity('polls')">
+                    Poll Actions
+                </button>
+                <button class="filter-btn" data-filter="shares" onclick="filterActivity('shares')">
+                    Shares
+                </button>
+            </div>
+
+            <div class="activity-feed animate-fadeInUp delay-400">
+                <h3
+                    style="font-size: 1.25rem; font-weight: 700; margin-bottom: var(--space-lg); color: var(--color-white);">
+                    Recent Activity
+                </h3>
+                <div id="activityFeed">
+                    <div class="empty-state">⏳ Loading activity...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let allActivity = [];
+        let currentFilter = 'all';
+
+        // Check if admin logged in
+        const adminSession = localStorage.getItem('pollpulse_admin_session');
+        const isAdmin = !!adminSession;
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            await loadStats();
+            await loadActivity();
+
+            // Auto-refresh every 10 seconds
+            setInterval(async () => {
+                await loadStats();
+                await loadActivity();
+            }, 10000);
+        });
+
+        async function loadStats() {
+            try {
+                // Active users
+                const activeResponse = await fetch('/api/stats/active-users');
+                const activeData = await activeResponse.json();
+                if (activeData.success) {
+                    document.getElementById('activeUsers').textContent = activeData.activeUsers;
+                }
+
+                // Global stats
+                const statsResponse = await fetch('/api/stats/global');
+                const statsData = await statsResponse.json();
+                if (statsData.success) {
+                    document.getElementById('todayVotes').textContent = (statsData.stats.votes_today || 0).toLocaleString();
+                    document.getElementById('activePolls').textContent = statsData.stats.trending_polls || 0;
+                    document.getElementById('activityRate').textContent = (statsData.stats.votes_per_hour || 0).toLocaleString();
+                }
+
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        async function loadActivity() {
+            const feed = document.getElementById('activityFeed');
+
+            try {
+                let endpoint = '/api/activity/my-history';
+                const sessionId = localStorage.getItem('pollpulse_session') || 'anonymous';
+
+                // If admin, get all activity
+                if (isAdmin) {
+                    endpoint = '/api/admin/activity';
+                }
+
+                const url = isAdmin
+                    ? endpoint
+                    : `${endpoint}?sessionId=${sessionId}`;
+
+                const headers = {};
+                if (isAdmin) {
+                    headers['X-Admin-Session'] = adminSession;
+                }
+
+                const response = await fetch(url, { headers });
+                const data = await response.json();
+
+                if (data.success) {
+                    allActivity = isAdmin ? data.logs : data.history;
+                    displayActivity();
+                } else {
+                    throw new Error('Failed to load activity');
+                }
+
+            } catch (error) {
+                console.error('Error loading activity:', error);
+                feed.innerHTML = `
+                    <div class="empty-state">
+                        <h3>⚠️ Error Loading Activity</h3>
+                        <p>Unable to fetch activity logs</p>
+                    </div>
+                `;
+            }
+        }
+
+        function displayActivity() {
+            const feed = document.getElementById('activityFeed');
+
+            let filtered = allActivity;
+
+            // Apply filter
+            if (currentFilter === 'votes') {
+                filtered = filtered.filter(a => a.action === 'vote');
+            } else if (currentFilter === 'polls') {
+                filtered = filtered.filter(a => ['create_poll', 'view_poll'].includes(a.action));
+            } else if (currentFilter === 'shares') {
+                filtered = filtered.filter(a => a.action === 'share_poll');
+            }
+
+            if (filtered.length === 0) {
+                feed.innerHTML = `
+                    <div class="empty-state">
+                        <h3>📭 No Activity Yet</h3>
+                        <p>Start voting and creating polls to see activity here</p>
+                    </div>
+                `;
+                return;
+            }
+
+            feed.innerHTML = filtered.map(activity => {
+                const icon = getActivityIcon(activity.action);
+                const description = getActivityDescription(activity);
+                const timeAgo = formatTimeAgo(new Date(activity.created_at));
+
+                return `
+                    <div class="activity-item">
+                        <div class="activity-icon">${icon}</div>
+                        <div class="activity-content">
+                            <div class="activity-action">${description}</div>
+                            ${activity.question ? `<div class="activity-details">${escapeHtml(activity.question)}</div>` : ''}
+                        </div>
+                        <div class="activity-time">${timeAgo}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function getActivityIcon(action) {
+            const icons = {
+                'vote': '🗳️',
+                'create_poll': '✨',
+                'view_poll': '👁️',
+                'share_poll': '📤',
+                'delete_poll': '🗑️'
+            };
+            return icons[action] || '📊';
+        }
+
+        function getActivityDescription(activity) {
+            const descriptions = {
+                'vote': 'Voted on a poll',
+                'create_poll': 'Created a new poll',
+                'view_poll': 'Viewed a poll',
+                'share_poll': 'Shared a poll',
+                'delete_poll': 'Deleted a poll'
+            };
+
+            let desc = descriptions[activity.action] || 'Unknown action';
+
+            if (isAdmin && activity.session_id) {
+                const shortId = activity.session_id.substring(0, 8);
+                desc += ` (User: ${shortId}...)`;
+            }
+
+            return desc;
+        }
+
+        function filterActivity(filter) {
+            currentFilter = filter;
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.filter === filter) {
+                    btn.classList.add('active');
+                }
+            });
+            displayActivity();
+        }
+
+        function formatTimeAgo(date) {
+            const seconds = Math.floor((new Date() - date) / 1000);
+            if (seconds < 60) return 'just now';
+            const minutes = Math.floor(seconds / 60);
+            if (minutes < 60) return `${minutes}m ago`;
+            const hours = Math.floor(minutes / 60);
+            if (hours < 24) return `${hours}h ago`;
+            const days = Math.floor(hours / 24);
+            return `${days}d ago`;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+
+</html>

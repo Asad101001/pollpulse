@@ -8,6 +8,10 @@
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/animations.css">
     <link rel="stylesheet" href="css/components.css">
+
+    <!-- QR Code Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
     <style>
         .vote-container {
             max-width: 900px;
@@ -74,7 +78,7 @@
             overflow: hidden;
         }
 
-        .vote-option:hover {
+        .vote-option:hover:not(.voted) {
             border-color: var(--color-red-primary);
             background: rgba(255, 0, 68, 0.05);
             transform: translateX(8px);
@@ -152,14 +156,18 @@
             border: 1px solid var(--glass-border);
             border-radius: var(--radius-xl);
             padding: var(--space-xl);
-            text-align: center;
+        }
+
+        .share-grid {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: var(--space-xl);
+            align-items: center;
         }
 
         .share-buttons {
             display: flex;
             gap: var(--space-md);
-            justify-content: center;
-            margin-top: var(--space-lg);
             flex-wrap: wrap;
         }
 
@@ -172,12 +180,36 @@
             font-weight: 600;
             cursor: pointer;
             transition: var(--transition-base);
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
         }
 
         .share-btn:hover {
             background: rgba(255, 0, 68, 0.1);
             border-color: var(--color-red-primary);
             transform: translateY(-2px);
+        }
+
+        .qr-code-container {
+            background: white;
+            padding: var(--space-md);
+            border-radius: var(--radius-md);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: var(--space-sm);
+        }
+
+        #qrcode {
+            display: flex;
+            justify-content: center;
+        }
+
+        .qr-label {
+            font-size: 0.75rem;
+            color: #333;
+            font-weight: 600;
         }
 
         .success-message {
@@ -192,16 +224,28 @@
             animation: slideInFromBottom 0.5s ease;
         }
 
-        .loading {
+        .loading,
+        .error {
             text-align: center;
             padding: 60px;
+        }
+
+        .loading {
             color: rgba(255, 255, 255, 0.6);
         }
 
         .error {
-            text-align: center;
-            padding: 60px;
             color: #ef4444;
+        }
+
+        @media (max-width: 768px) {
+            .share-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .qr-code-container {
+                order: -1;
+            }
         }
     </style>
 </head>
@@ -300,6 +344,7 @@
             const totalVotes = pollData.total_votes || 0;
             const createdDate = new Date(pollData.created_at);
             const timeAgo = formatTimeAgo(createdDate);
+            const pollUrl = window.location.href;
 
             container.innerHTML = `
                 <div class="vote-card animate-fadeInUp">
@@ -351,27 +396,57 @@
             }).join('')}
                     </div>
 
-                    <button class="btn btn-primary vote-button" id="submitVote" ${!pollData.show_results_before_vote ? 'disabled' : ''}>
+                    <button class="btn btn-primary vote-button" id="submitVote">
                         <span>🗳️</span>
                         <span>Cast Your Vote</span>
                     </button>
                 </div>
 
                 <div class="share-section animate-fadeInUp delay-200">
-                    <h3 style="font-size: 1.5rem; margin-bottom: var(--space-md); color: var(--color-white);">
+                    <h3 style="font-size: 1.5rem; margin-bottom: var(--space-lg); color: var(--color-white); text-align: center;">
                         📤 Share This Poll
                     </h3>
-                    <p style="color: var(--color-gray-300); margin-bottom: var(--space-lg);">
-                        Get more opinions by sharing with friends
-                    </p>
-                    <div class="share-buttons">
-                        <button class="share-btn" onclick="shareTwitter()">🐦 Twitter</button>
-                        <button class="share-btn" onclick="shareFacebook()">👥 Facebook</button>
-                        <button class="share-btn" onclick="shareWhatsApp()">💬 WhatsApp</button>
-                        <button class="share-btn" onclick="copyLink()">🔗 Copy Link</button>
+                    <div class="share-grid">
+                        <div>
+                            <p style="color: var(--color-gray-300); margin-bottom: var(--space-lg);">
+                                Get more opinions by sharing with friends
+                            </p>
+                            <div class="share-buttons">
+                                <button class="share-btn" onclick="shareTwitter()">
+                                    <span>🐦</span>
+                                    <span>Twitter</span>
+                                </button>
+                                <button class="share-btn" onclick="shareFacebook()">
+                                    <span>👥</span>
+                                    <span>Facebook</span>
+                                </button>
+                                <button class="share-btn" onclick="shareWhatsApp()">
+                                    <span>💬</span>
+                                    <span>WhatsApp</span>
+                                </button>
+                                <button class="share-btn" onclick="copyLink()">
+                                    <span>🔗</span>
+                                    <span>Copy Link</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="qr-code-container">
+                            <div id="qrcode"></div>
+                            <div class="qr-label">Scan to Vote</div>
+                        </div>
                     </div>
                 </div>
             `;
+
+            // Generate QR Code
+            new QRCode(document.getElementById('qrcode'), {
+                text: pollUrl,
+                width: 160,
+                height: 160,
+                colorDark: '#000000',
+                colorLight: '#ffffff',
+                correctLevel: QRCode.CorrectLevel.H
+            });
 
             // Add click handlers to options
             document.querySelectorAll('.vote-option').forEach(option => {
@@ -426,7 +501,7 @@
                     const successMsg = document.getElementById('successMessage');
                     successMsg.innerHTML = `
                         <div class="success-message">
-                            🎉 Your vote has been recorded! Watch the results update in real-time.
+                            🎉 Your vote has been recorded anonymously! Watch the results update in real-time.
                         </div>
                     `;
                     successMsg.style.display = 'block';
@@ -445,6 +520,11 @@
                     // Reload poll data to show updated results
                     setTimeout(async () => {
                         await loadPoll();
+                        // Re-mark as voted
+                        hasVoted = true;
+                        document.querySelectorAll('.vote-option').forEach(opt => {
+                            opt.classList.add('voted');
+                        });
                     }, 1000);
 
                 } else {
@@ -519,25 +599,35 @@
         }
 
         function shareTwitter() {
-            const url = window.location.href;
             const text = pollData.question;
-            window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`);
+            const url = window.location.href;
+            window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text + ' - Vote now!')}&url=${encodeURIComponent(url)}`, '_blank');
         }
 
         function shareFacebook() {
             const url = window.location.href;
-            window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`);
+            window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
         }
 
         function shareWhatsApp() {
+            const text = pollData.question + ' - Vote now!';
             const url = window.location.href;
-            const text = pollData.question;
-            window.open(`https://wa.me/?text=${encodeURIComponent(text + ' ' + url)}`);
+            window.open(`https://wa.me/?text=${encodeURIComponent(text + ' ' + url)}`, '_blank');
         }
 
         function copyLink() {
-            navigator.clipboard.writeText(window.location.href).then(() => {
-                alert('Link copied to clipboard! 📋');
+            const url = window.location.href;
+            navigator.clipboard.writeText(url).then(() => {
+                alert('📋 Link copied to clipboard!');
+            }).catch(() => {
+                // Fallback for older browsers
+                const textarea = document.createElement('textarea');
+                textarea.value = url;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                alert('📋 Link copied to clipboard!');
             });
         }
     </script>

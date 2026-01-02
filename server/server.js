@@ -649,4 +649,141 @@ process.on('SIGTERM', async () => {
     process.exit(0);
 });
 
+// ============================================
+// USER ACTIVITY LOGGING SYSTEM
+// ============================================
+
+// Log user activity (view-only access for all users)
+app.post('/api/activity/log', async (req, res) => {
+    try {
+        const { sessionId, action, pollId, details } = req.body;
+        
+        if (!sessionId || !action) {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'Missing required fields' 
+            });
+        }
+        
+        // Get or create user
+        let [users] = await pool.query(
+            'SELECT id FROM users WHERE session_id = ?',
+            [sessionId]
+        );
+        
+        let userId;
+        if (users.length === 0) {
+            const [userResult] = await pool.query(
+                'INSERT INTO users (session_id, created_at) VALUES (?, NOW())',
+                [sessionId]
+            );
+            userId = userResult.insertId;
+        } else {
+            userId = users[0].id;
+        }
+        
+        // Log activity
+        await pool.query(`
+            INSERT INTO activity_logs (
+                user_id,
+                action,
+                poll_id,
+                details,
+                created_at
+            ) VALUES (?, ?, ?, ?, NOW())
+        `, [userId, action, pollId || null, details || null]);
+        
+        res.json({ success: true, message: 'Activity logged' });
+        
+    } catch (error) {
+        console.error('Error logging activity:', error);
+        // Don't fail the request if logging fails
+        res.json({ success: true });
+    }
+});
+
+// Get activity logs (admin only)
+app.get('/api/admin/activity', requireAdmin, async (req, res) => {
+    try {
+        const { limit = 100 } = req.query;
+        
+        const [logs] = await pool.query(`
+            SELECT 
+                al.id,
+                al.action,
+                al.poll_id,
+                al.details,
+                al.created_at,
+                u.session_id,
+                COUNT(v.id) as user_total_votes
+            FROM activity_logs al
+            LEFT JOIN users u ON al.user_id = u.id
+            LEFT JOIN votes v ON u.id = v.user_id
+            GROUP BY al.id
+            ORDER BY al.created_at DESC
+            LIMIT ?
+        `, [parseInt(limit)]);
+        
+        res.json({ success: true, logs });
+        
+    } catch (error) {
+        console.error('Error fetching activity logs:', error);
+        res.status(500).json({ success: false, error: 'Failed to fetch logs' });
+    }
+});
+
+// Get active users count (public endpoint)
+app.get('/api/stats/active-users', async (req, res) => {
+    try {
+        const [result] = await pool.query(`
+            SELECT COUNT(DISTINCT user_id) as active_users
+            FROM activity_logs
+            WHERE created_at >= DATE_SUB(NOW(), INTERVAL 5 MINUTE)
+        `);
+        
+        res.json({ 
+            success: true, 
+            activeUsers: result[0].active_users || 0 
+        });
+        
+    } catch (error) {
+        console.error('Error fetching active users:', error);
+        res.json({ success: true, activeUsers: 0 });
+    }
+});
+
+// Get user's own activity history (by session)
+app.get('/api/activity/my-history', async (req, res) => {
+    try {
+        const { sessionId } = req.query;
+        
+        if (!sessionId) {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'Session ID required' 
+            });
+        }
+        
+        const [logs] = await pool.query(`
+            SELECT 
+                al.action,
+                al.poll_id,
+                al.created_at,
+                p.question
+            FROM activity_logs al
+            LEFT JOIN users u ON al.user_id = u.id
+            LEFT JOIN polls p ON al.poll_id = p.id
+            WHERE u.session_id = ?
+            ORDER BY al.created_at DESC
+            LIMIT 50
+        `, [sessionId]);
+        
+        res.json({ success: true, history: logs });
+        
+    } catch (error) {
+        console.error('Error fetching user history:', error);
+        res.status(500).json({ success: false, error: 'Failed to fetch history' });
+    }
+});
+
 module.exports = app;
