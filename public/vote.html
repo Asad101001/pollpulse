@@ -375,8 +375,8 @@
 
                     <div class="vote-options-list" id="voteOptions">
                         ${pollData.options.map(option => {
-                const percentage = option.percentage || 0;
-                const voteCount = option.vote_count || 0;
+                const percentage = parseFloat(option.percentage) || 0;
+                const voteCount = parseInt(option.vote_count) || 0;
 
                 return `
                                 <div class="vote-option" data-option-id="${option.id}">
