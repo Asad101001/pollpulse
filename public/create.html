@@ -278,7 +278,8 @@
 
         <div class="create-container animate-fadeInUp">
             <div class="form-card">
-                <div class="form-header">
+
+                <div class="page-header animate-fadeInDown">
                     <h1>✨ Create Your Poll</h1>
                     <p>Launch a poll in 60 seconds and watch the magic happen</p>
                 </div>
@@ -334,22 +335,37 @@
                             Choose Theme
                         </label>
                         <div class="theme-selector">
-                            <div class="theme-option active" data-theme="default"
-                                onclick="selectTheme(this, 'default')">
+                            <div class="theme-option active" data-theme="default">
                                 <span class="theme-icon">🎨</span>
                                 <span class="theme-name">Default</span>
                             </div>
-                            <div class="theme-option" data-theme="fire" onclick="selectTheme(this, 'fire')">
+                            <div class="theme-option" data-theme="fire">
                                 <span class="theme-icon">🔥</span>
                                 <span class="theme-name">Fire</span>
                             </div>
-                            <div class="theme-option" data-theme="ocean" onclick="selectTheme(this, 'ocean')">
+                            <div class="theme-option" data-theme="ocean">
                                 <span class="theme-icon">🌊</span>
                                 <span class="theme-name">Ocean</span>
                             </div>
-                            <div class="theme-option" data-theme="neon" onclick="selectTheme(this, 'neon')">
+                            <div class="theme-option" data-theme="neon">
                                 <span class="theme-icon">⚡</span>
                                 <span class="theme-name">Neon</span>
+                            </div>
+                            <div class="theme-option" data-theme="dark">
+                                <span class="theme-icon">🌙</span>
+                                <span class="theme-name">Dark</span>
+                            </div>
+                            <div class="theme-option" data-theme="nature">
+                                <span class="theme-icon">🌿</span>
+                                <span class="theme-name">Nature</span>
+                            </div>
+                            <div class="theme-option" data-theme="sunset">
+                                <span class="theme-icon">🌅</span>
+                                <span class="theme-name">Sunset</span>
+                            </div>
+                            <div class="theme-option" data-theme="cosmic">
+                                <span class="theme-icon">🌌</span>
+                                <span class="theme-name">Cosmic</span>
                             </div>
                         </div>
                     </div>
@@ -465,9 +481,23 @@
             updatePreview();
         }
 
+
         function pickEmoji(btn) {
-            const emojis = ['😊', '👍', '❤️', '🔥', '⭐', '🎉', '✅', '❌', '🤔', '💡', '📊', '🎯', '💪', '🌟', '🚀'];
-            const currentIndex = emojis.indexOf(btn.textContent);
+            const emojis = [
+                '😊', '😃', '😄', '😁', '😆', '😅', '🤣', '😂',
+                '👍', '👎', '👏', '🙌', '👌', '✌️', '🤞', '🤘',
+                '❤️', '💙', '💚', '💛', '🧡', '💜', '🖤', '🤍',
+                '🔥', '⚡', '💥', '✨', '💫', '⭐', '🌟', '💯',
+                '🎉', '🎊', '🎈', '🎁', '🏆', '🥇', '🥈', '🥉',
+                '📊', '📈', '📉', '💰', '💵', '💴', '💶', '💷',
+                '🚀', '🛸', '🌍', '🌎', '🌏', '🗺️', '🧭', '⚓',
+                '☕', '🍕', '🍔', '🍟', '🌮', '🌯', '🥗', '🍱',
+                '⚽', '🏀', '🏈', '⚾', '🎾', '🏐', '🏉', '🎱'
+            ];
+
+            // Show emoji picker modal
+            const currentEmoji = btn.textContent;
+            const currentIndex = emojis.indexOf(currentEmoji);
             const nextIndex = (currentIndex + 1) % emojis.length;
             btn.textContent = emojis[nextIndex];
             updatePreview();

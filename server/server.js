@@ -242,6 +242,31 @@ app.get('/api/polls', async (req, res) => {
     }
 });
 
+// Get top voters
+app.get('/api/stats/top-voters', async (req, res) => {
+    try {
+        const { limit = 10 } = req.query;
+        
+        const [voters] = await pool.query(`
+            SELECT 
+                u.id,
+                u.created_at,
+                COUNT(v.id) as total_votes
+            FROM users u
+            LEFT JOIN votes v ON u.id = v.user_id
+            GROUP BY u.id
+            HAVING total_votes > 0
+            ORDER BY total_votes DESC
+            LIMIT ?
+        `, [parseInt(limit)]);
+        
+        res.json({ success: true, voters });
+    } catch (error) {
+        console.error('Error fetching top voters:', error);
+        res.status(500).json({ success: false, error: 'Failed to fetch top voters' });
+    }
+});
+
 // Get single poll with options
 app.get('/api/polls/:id', async (req, res) => {
     try {

@@ -250,45 +250,10 @@
         </section>
 
         <!-- Footer -->
-        <footer class="footer">
-            <div class="footer-content">
-                <div class="footer-section">
-                    <h4>PollPulse</h4>
-                    <p>Making voting interactive and fun.</p>
-                    <div class="footer-social">
-                        <a href="#" aria-label="Twitter">🐦</a>
-                        <a href="#" aria-label="Instagram">📸</a>
-                        <a href="#" aria-label="LinkedIn">💼</a>
-                        <a href="#" aria-label="GitHub">💻</a>
-                    </div>
-                </div>
-
-                <div class="footer-section">
-                    <h4>Product</h4>
-                    <a href="explore.html">Explore Polls</a>
-                    <a href="create.html">Create Poll</a>
-                    <a href="leaderboard.html">Leaderboard</a>
-                </div>
-
-                <div class="footer-section">
-                    <h4>Resources</h4>
-                    <a href="#">Documentation</a>
-                    <a href="#">API</a>
-                    <a href="#">Support</a>
-                </div>
-
-                <div class="footer-section">
-                    <h4>Legal</h4>
-                    <a href="#">Privacy Policy</a>
-                    <a href="#">Terms of Service</a>
-                    <a href="#">Cookie Policy</a>
-                </div>
-            </div>
-
-            <div class="footer-bottom">
-                <p>&copy; 2025 PollPulse. Built with ❤️ for Cloud Computing Capstone.</p>
-                <p>Powered by AWS • EC2 • RDS • S3</p>
-            </div>
+        <footer
+            style="text-align: center; padding: 40px 20px; color: rgba(255,255,255,0.5); font-size: 0.9rem; border-top: 1px solid rgba(255,255,255,0.1); margin-top: 60px;">
+            <p>&copy; 2025-26 PollPulse | Cloud Computing Capstone</p>
+            <p style="margin-top: 10px; font-size: 0.8rem;">Built with AWS EC2 • RDS • VPC</p>
         </footer>
     </div>
 
@@ -337,8 +302,16 @@
         async function loadTrendingPolls() {
             const trendingGrid = document.getElementById('trendingPollsGrid');
 
+            if (!trendingGrid) {
+                console.error('Trending polls grid not found');
+                return;
+            }
+
+            // Show loading state
+            trendingGrid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: rgba(255,255,255,0.6);">⏳ Loading trending polls...</div>';
+
             try {
-                console.log('Fetching trending polls...');
+                console.log('Fetching trending polls from API...');
                 const response = await fetch('/api/polls?limit=6');
 
                 if (!response.ok) {
@@ -357,18 +330,18 @@
                 // Sort by vote count (trending)
                 polls.sort((a, b) => (b.vote_count || 0) - (a.vote_count || 0));
 
-                // Take top 6
+                // Take top 6 trending polls
                 const trendingPolls = polls.slice(0, 6);
 
                 if (trendingPolls.length === 0) {
                     trendingGrid.innerHTML = `
-                        <div style="grid-column: 1/-1; text-align: center; padding: 40px;">
-                            <p style="color: rgba(255,255,255,0.6); margin-bottom: 20px;">No polls yet</p>
-                            <button class="btn btn-primary" onclick="window.location.href='create.html'">
-                                Create First Poll
-                            </button>
-                        </div>
-                    `;
+                <div style="grid-column: 1/-1; text-align: center; padding: 40px;">
+                    <p style="color: rgba(255,255,255,0.6); margin-bottom: 20px;">No polls yet</p>
+                    <button class="btn btn-primary" onclick="window.location.href='create.html'">
+                        Create First Poll
+                    </button>
+                </div>
+            `;
                     return;
                 }
 
@@ -378,18 +351,18 @@
                     const delay = (index % 3) * 200;
 
                     return `
-                        <div class="poll-card animate-fadeInUp delay-${delay}" onclick="window.location.href='vote.html?id=${poll.id}'" style="cursor: pointer;">
-                            <div class="poll-header">
-                                <div class="poll-badge">
-                                    <div class="live-dot"></div>
-                                    <span>🔥 TRENDING</span>
-                                </div>
-                                <div class="poll-votes">${voteCount} vote${voteCount !== 1 ? 's' : ''}</div>
-                            </div>
-                            <div class="poll-question">${escapeHtml(poll.question)}</div>
-                            ${poll.description ? `<p style="color: var(--color-gray-400); font-size: 0.9rem; margin-top: 8px;">${escapeHtml(poll.description.substring(0, 80))}${poll.description.length > 80 ? '...' : ''}</p>` : ''}
+                <div class="poll-card animate-fadeInUp delay-${delay}" onclick="window.location.href='vote.html?id=${poll.id}'" style="cursor: pointer;">
+                    <div class="poll-header">
+                        <div class="poll-badge">
+                            <div class="live-dot"></div>
+                            <span>🔥 TRENDING</span>
                         </div>
-                    `;
+                        <div class="poll-votes">${voteCount} vote${voteCount !== 1 ? 's' : ''}</div>
+                    </div>
+                    <div class="poll-question">${escapeHtml(poll.question)}</div>
+                    ${poll.description ? `<p style="color: var(--color-gray-400); font-size: 0.9rem; margin-top: 8px;">${escapeHtml(poll.description.substring(0, 80))}${poll.description.length > 80 ? '...' : ''}</p>` : ''}
+                </div>
+            `;
                 }).join('');
 
                 console.log(`Displayed ${trendingPolls.length} trending polls`);
@@ -397,13 +370,13 @@
             } catch (error) {
                 console.error('Error loading trending polls:', error);
                 trendingGrid.innerHTML = `
-                    <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #ef4444;">
-                        <p>⚠️ Error loading polls</p>
-                        <button onclick="loadTrendingPolls()" class="btn btn-primary" style="margin-top: 15px;">
-                            Retry
-                        </button>
-                    </div>
-                `;
+            <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #ef4444;">
+                <p>⚠️ Error loading polls</p>
+                <button onclick="loadTrendingPolls()" class="btn btn-primary" style="margin-top: 15px;">
+                    Retry
+                </button>
+            </div>
+        `;
             }
         }
 
