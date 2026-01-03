@@ -597,6 +597,136 @@ app.get('/api/leaderboard', async (req, res) => {
         res.status(500).json({ success: false, error: 'Failed to fetch leaderboard' });
     }
 });
+// ============================================
+// SIMPLE USER AUTHENTICATION
+// Add to server/server.js after other routes
+// ============================================
+
+// Simple user registration/login (name only, no password)
+app.post('/api/user/set-name', async (req, res) => {
+    try {
+        const { sessionId, name, avatar } = req.body;
+        
+        if (!sessionId || !name) {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'Session ID and name required' 
+            });
+        }
+        
+        // Validate name (2-30 chars, alphanumeric + spaces)
+        if (name.length < 2 || name.length > 30) {
+            return res.status(400).json({
+                success: false,
+                error: 'Name must be 2-30 characters'
+            });
+        }
+        
+        // Get or create user
+        let [users] = await pool.query(
+            'SELECT id FROM users WHERE session_id = ?',
+            [sessionId]
+        );
+        
+        let userId;
+        if (users.length === 0) {
+            const [result] = await pool.query(
+                'INSERT INTO users (session_id, username, avatar, created_at) VALUES (?, ?, ?, NOW())',
+                [sessionId, name, avatar || null]
+            );
+            userId = result.insertId;
+        } else {
+            // Update existing user
+            await pool.query(
+                'UPDATE users SET username = ?, avatar = ? WHERE session_id = ?',
+                [name, avatar || null, sessionId]
+            );
+            userId = users[0].id;
+        }
+        
+        res.json({ 
+            success: true, 
+            message: 'Name saved',
+            userId 
+        });
+        
+    } catch (error) {
+        console.error('Error setting user name:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Failed to save name' 
+        });
+    }
+});
+
+// Get user info
+app.get('/api/user/info', async (req, res) => {
+    try {
+        const { sessionId } = req.query;
+        
+        if (!sessionId) {
+            return res.json({ success: true, user: null });
+        }
+        
+        const [users] = await pool.query(`
+            SELECT 
+                id,
+                username,
+                avatar,
+                created_at,
+                (SELECT COUNT(*) FROM votes WHERE user_id = users.id) as total_votes
+            FROM users
+            WHERE session_id = ?
+        `, [sessionId]);
+        
+        if (users.length === 0) {
+            return res.json({ success: true, user: null });
+        }
+        
+        res.json({ 
+            success: true, 
+            user: users[0]
+        });
+        
+    } catch (error) {
+        console.error('Error fetching user info:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Failed to fetch user info' 
+        });
+    }
+});
+
+// Get leaderboard with usernames
+app.get('/api/leaderboard/users', async (req, res) => {
+    try {
+        const { limit = 10 } = req.query;
+        
+        const [users] = await pool.query(`
+            SELECT 
+                u.username,
+                u.avatar,
+                COUNT(v.id) as total_votes,
+                u.created_at
+            FROM users u
+            LEFT JOIN votes v ON u.id = v.user_id
+            WHERE u.username IS NOT NULL
+            GROUP BY u.id
+            ORDER BY total_votes DESC
+            LIMIT ?
+        `, [parseInt(limit)]);
+        
+        res.json({ success: true, leaderboard: users });
+        
+    } catch (error) {
+        console.error('Error fetching leaderboard:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Failed to fetch leaderboard' 
+        });
+    }
+});
+
 
 // Catch-all for frontend routes
 app.get('*', (req, res) => {
