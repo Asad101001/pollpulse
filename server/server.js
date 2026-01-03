@@ -1,7 +1,3 @@
-// ============================================
-// POLLPULSE - BACKEND SERVER (FIXED)
-// ============================================
-
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -12,10 +8,7 @@ const { pool, testConnection } = require('./config/database');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// ============================================
-// MIDDLEWARE
-// ============================================
-
+// Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -27,27 +20,12 @@ app.use((req, res, next) => {
     next();
 });
 
-// ============================================
-// ROUTES
-// ============================================
-
-// Health check
-app.get('/api/health', (req, res) => {
-    res.json({ 
-        status: 'ok', 
-        timestamp: new Date().toISOString(),
-        uptime: process.uptime(),
-        database: pool ? 'connected' : 'disconnected'
-    });
-});
-
+// Admin credentials and session storage
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'asad';
-
-// Simple session storage (in production, use Redis)
 const adminSessions = new Map();
 
-// Middleware to check admin authentication
+// Admin authentication middleware
 function requireAdmin(req, res, next) {
     const sessionId = req.headers['x-admin-session'];
     
@@ -59,7 +37,7 @@ function requireAdmin(req, res, next) {
     }
     
     const session = adminSessions.get(sessionId);
-    if (Date.now() - session.timestamp > 24 * 60 * 60 * 1000) { // 24 hours
+    if (Date.now() - session.timestamp > 24 * 60 * 60 * 1000) {
         adminSessions.delete(sessionId);
         return res.status(401).json({ 
             success: false, 
@@ -67,10 +45,19 @@ function requireAdmin(req, res, next) {
         });
     }
     
-    // Refresh session
     session.timestamp = Date.now();
     next();
 }
+
+// Health check
+app.get('/api/health', (req, res) => {
+    res.json({ 
+        status: 'ok', 
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime(),
+        database: pool ? 'connected' : 'disconnected'
+    });
+});
 
 // Admin login
 app.post('/api/admin/login', (req, res) => {
@@ -110,11 +97,33 @@ app.get('/api/admin/check', requireAdmin, (req, res) => {
     res.json({ success: true, authenticated: true });
 });
 
-// ============================================
-// PROTECTED ADMIN ROUTES
-// ============================================
+// Get all polls (admin - includes ended polls)
+app.get('/api/admin/polls', requireAdmin, async (req, res) => {
+    try {
+        const [polls] = await pool.query(`
+            SELECT 
+                p.id,
+                p.question,
+                p.description,
+                p.theme,
+                p.created_at,
+                p.ends_at,
+                p.status,
+                COUNT(v.id) as vote_count
+            FROM polls p
+            LEFT JOIN votes v ON p.id = v.poll_id
+            GROUP BY p.id
+            ORDER BY p.created_at DESC
+        `);
+        
+        res.json({ success: true, polls });
+    } catch (error) {
+        console.error('Error fetching admin polls:', error);
+        res.status(500).json({ success: false, error: 'Failed to fetch polls' });
+    }
+});
 
-// Delete poll (protected)
+// Delete poll (admin only)
 app.delete('/api/admin/polls/:id', requireAdmin, async (req, res) => {
     const connection = await pool.getConnection();
     
@@ -160,33 +169,7 @@ app.delete('/api/admin/polls/:id', requireAdmin, async (req, res) => {
     }
 });
 
-// Get all polls (including ended) - protected
-app.get('/api/admin/polls', requireAdmin, async (req, res) => {
-    try {
-        const [polls] = await pool.query(`
-            SELECT 
-                p.id,
-                p.question,
-                p.description,
-                p.theme,
-                p.created_at,
-                p.ends_at,
-                p.status,
-                COUNT(v.id) as vote_count
-            FROM polls p
-            LEFT JOIN votes v ON p.id = v.poll_id
-            GROUP BY p.id
-            ORDER BY p.created_at DESC
-        `);
-        
-        res.json({ success: true, polls });
-    } catch (error) {
-        console.error('Error fetching admin polls:', error);
-        res.status(500).json({ success: false, error: 'Failed to fetch polls' });
-    }
-});
-
-// Update poll status
+// Update poll status (admin only)
 app.patch('/api/admin/polls/:id/status', requireAdmin, async (req, res) => {
     try {
         const pollId = req.params.id;
@@ -220,7 +203,7 @@ app.patch('/api/admin/polls/:id/status', requireAdmin, async (req, res) => {
     }
 });
 
-// Get all polls
+// Get all polls (public - active only)
 app.get('/api/polls', async (req, res) => {
     try {
         const { filter = 'all', search = '', limit = 20 } = req.query;
@@ -265,7 +248,7 @@ app.get('/api/polls/:id', async (req, res) => {
         const pollId = req.params.id;
         
         const [polls] = await pool.query(
-            'SELECT * FROM polls WHERE id = ? AND status = "active"',
+            'SELECT * FROM polls WHERE id = ?',
             [pollId]
         );
         
@@ -274,6 +257,11 @@ app.get('/api/polls/:id', async (req, res) => {
         }
         
         const poll = polls[0];
+        
+        // Check if poll has actually ended
+        if (poll.ends_at && new Date(poll.ends_at) < new Date()) {
+            poll.status = 'ended';
+        }
         
         const [options] = await pool.query(`
             SELECT 
@@ -308,85 +296,6 @@ app.get('/api/polls/:id', async (req, res) => {
     } catch (error) {
         console.error('Error fetching poll:', error);
         res.status(500).json({ success: false, error: 'Failed to fetch poll' });
-    }
-});
-
-app.delete('/api/polls/:id', async (req, res) => {
-    const connection = await pool.getConnection();
-    
-    try {
-        const pollId = req.params.id;
-        
-        // Check if poll exists
-        const [polls] = await connection.query(
-            'SELECT id FROM polls WHERE id = ?',
-            [pollId]
-        );
-        
-        if (polls.length === 0) {
-            return res.status(404).json({ 
-                success: false, 
-                error: 'Poll not found' 
-            });
-        }
-        
-        await connection.beginTransaction();
-        
-        // Delete in order: votes -> poll_options -> polls
-        await connection.query('DELETE FROM votes WHERE poll_id = ?', [pollId]);
-        await connection.query('DELETE FROM poll_options WHERE poll_id = ?', [pollId]);
-        await connection.query('DELETE FROM polls WHERE id = ?', [pollId]);
-        
-        await connection.commit();
-        
-        console.log(`Poll ${pollId} deleted successfully`);
-        
-        res.json({ 
-            success: true, 
-            message: 'Poll deleted successfully' 
-        });
-        
-    } catch (error) {
-        await connection.rollback();
-        console.error('Error deleting poll:', error);
-        res.status(500).json({ 
-            success: false, 
-            error: 'Failed to delete poll' 
-        });
-    } finally {
-        connection.release();
-    }
-});
-
-// Update poll status (end poll early)
-app.patch('/api/polls/:id/status', async (req, res) => {
-    try {
-        const pollId = req.params.id;
-        const { status } = req.body;
-        
-        if (!['active', 'ended'].includes(status)) {
-            return res.status(400).json({ 
-                success: false, 
-                error: 'Invalid status' 
-            });
-        }
-        
-        await pool.query(
-            'UPDATE polls SET status = ? WHERE id = ?',
-            [status, pollId]
-        );
-        
-        res.json({ 
-            success: true, 
-            message: 'Poll status updated' 
-        });
-        
-    } catch (error) {
-        console.error('Error updating poll status:', error);
-        res.status(500).json({ 
-            success: false, 
-            error: 'Failed to update poll status' 
-        });
     }
 });
 
@@ -474,7 +383,7 @@ app.post('/api/polls/:id/vote', async (req, res) => {
         }
         
         const [polls] = await pool.query(
-            'SELECT * FROM polls WHERE id = ? AND status = "active"',
+            'SELECT * FROM polls WHERE id = ?',
             [pollId]
         );
         
@@ -496,7 +405,7 @@ app.post('/api/polls/:id/vote', async (req, res) => {
         let userId;
         if (users.length === 0) {
             const [userResult] = await pool.query(
-                'INSERT INTO users (session_id) VALUES (?)',
+                'INSERT INTO users (session_id, created_at) VALUES (?, NOW())',
                 [sessionId]
             );
             userId = userResult.insertId;
@@ -551,172 +460,30 @@ app.get('/api/stats/global', async (req, res) => {
     }
 });
 
-// Get leaderboard
+// Get leaderboard (polls only)
 app.get('/api/leaderboard', async (req, res) => {
     try {
-        const { type = 'voters', limit = 10 } = req.query;
+        const { type = 'polls', limit = 10 } = req.query;
         
-        let query;
-        if (type === 'voters') {
-            query = `
-                SELECT 
-                    u.id,
-                    u.username,
-                    COUNT(v.id) as total_votes,
-                    us.current_streak,
-                    COUNT(DISTINCT ub.badge_type) as badges_earned
-                FROM users u
-                LEFT JOIN votes v ON u.id = v.user_id
-                LEFT JOIN user_streaks us ON u.id = us.user_id
-                LEFT JOIN user_badges ub ON u.id = ub.user_id
-                GROUP BY u.id
-                ORDER BY total_votes DESC
-                LIMIT ?
-            `;
-        } else {
-            query = `
+        if (type === 'polls') {
+            const [polls] = await pool.query(`
                 SELECT 
                     p.id,
                     p.question,
-                    COUNT(v.id) as vote_count,
-                    p.created_at
+                    p.created_at,
+                    COUNT(v.id) as vote_count
                 FROM polls p
                 LEFT JOIN votes v ON p.id = v.poll_id
                 WHERE p.status = 'active'
                 GROUP BY p.id
-                ORDER BY vote_count DESC
+                ORDER BY vote_count DESC, p.created_at DESC
                 LIMIT ?
-            `;
-        }
-        
-        const [results] = await pool.query(query, [parseInt(limit)]);
-        
-        res.json({ success: true, leaderboard: results });
-    } catch (error) {
-        console.error('Error fetching leaderboard:', error);
-        res.status(500).json({ success: false, error: 'Failed to fetch leaderboard' });
-    }
-});
-// ============================================
-// SIMPLE USER AUTHENTICATION
-// Add to server/server.js after other routes
-// ============================================
-
-// Simple user registration/login (name only, no password)
-app.post('/api/user/set-name', async (req, res) => {
-    try {
-        const { sessionId, name, avatar } = req.body;
-        
-        if (!sessionId || !name) {
-            return res.status(400).json({ 
-                success: false, 
-                error: 'Session ID and name required' 
-            });
-        }
-        
-        // Validate name (2-30 chars, alphanumeric + spaces)
-        if (name.length < 2 || name.length > 30) {
-            return res.status(400).json({
-                success: false,
-                error: 'Name must be 2-30 characters'
-            });
-        }
-        
-        // Get or create user
-        let [users] = await pool.query(
-            'SELECT id FROM users WHERE session_id = ?',
-            [sessionId]
-        );
-        
-        let userId;
-        if (users.length === 0) {
-            const [result] = await pool.query(
-                'INSERT INTO users (session_id, username, avatar, created_at) VALUES (?, ?, ?, NOW())',
-                [sessionId, name, avatar || null]
-            );
-            userId = result.insertId;
+            `, [parseInt(limit)]);
+            
+            res.json({ success: true, leaderboard: polls });
         } else {
-            // Update existing user
-            await pool.query(
-                'UPDATE users SET username = ?, avatar = ? WHERE session_id = ?',
-                [name, avatar || null, sessionId]
-            );
-            userId = users[0].id;
+            res.json({ success: true, leaderboard: [] });
         }
-        
-        res.json({ 
-            success: true, 
-            message: 'Name saved',
-            userId 
-        });
-        
-    } catch (error) {
-        console.error('Error setting user name:', error);
-        res.status(500).json({ 
-            success: false, 
-            error: 'Failed to save name' 
-        });
-    }
-});
-
-// Get user info
-app.get('/api/user/info', async (req, res) => {
-    try {
-        const { sessionId } = req.query;
-        
-        if (!sessionId) {
-            return res.json({ success: true, user: null });
-        }
-        
-        const [users] = await pool.query(`
-            SELECT 
-                id,
-                username,
-                avatar,
-                created_at,
-                (SELECT COUNT(*) FROM votes WHERE user_id = users.id) as total_votes
-            FROM users
-            WHERE session_id = ?
-        `, [sessionId]);
-        
-        if (users.length === 0) {
-            return res.json({ success: true, user: null });
-        }
-        
-        res.json({ 
-            success: true, 
-            user: users[0]
-        });
-        
-    } catch (error) {
-        console.error('Error fetching user info:', error);
-        res.status(500).json({ 
-            success: false, 
-            error: 'Failed to fetch user info' 
-        });
-    }
-});
-
-// Get leaderboard with usernames
-app.get('/api/leaderboard/users', async (req, res) => {
-    try {
-        const { limit = 10 } = req.query;
-        
-        const [users] = await pool.query(`
-            SELECT 
-                u.username,
-                u.avatar,
-                COUNT(v.id) as total_votes,
-                u.created_at
-            FROM users u
-            LEFT JOIN votes v ON u.id = v.user_id
-            WHERE u.username IS NOT NULL
-            GROUP BY u.id
-            ORDER BY total_votes DESC
-            LIMIT ?
-        `, [parseInt(limit)]);
-        
-        res.json({ success: true, leaderboard: users });
         
     } catch (error) {
         console.error('Error fetching leaderboard:', error);
@@ -727,16 +494,12 @@ app.get('/api/leaderboard/users', async (req, res) => {
     }
 });
 
-
 // Catch-all for frontend routes
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
-// ============================================
-// ERROR HANDLING
-// ============================================
-
+// Error handling
 app.use((err, req, res, next) => {
     console.error('Unhandled error:', err);
     res.status(500).json({ 
@@ -745,10 +508,7 @@ app.use((err, req, res, next) => {
     });
 });
 
-// ============================================
-// START SERVER
-// ============================================
-
+// Start server
 async function startServer() {
     try {
         await testConnection();
@@ -777,143 +537,6 @@ process.on('SIGTERM', async () => {
     const { closePool } = require('./config/database');
     await closePool();
     process.exit(0);
-});
-
-// ============================================
-// USER ACTIVITY LOGGING SYSTEM
-// ============================================
-
-// Log user activity (view-only access for all users)
-app.post('/api/activity/log', async (req, res) => {
-    try {
-        const { sessionId, action, pollId, details } = req.body;
-        
-        if (!sessionId || !action) {
-            return res.status(400).json({ 
-                success: false, 
-                error: 'Missing required fields' 
-            });
-        }
-        
-        // Get or create user
-        let [users] = await pool.query(
-            'SELECT id FROM users WHERE session_id = ?',
-            [sessionId]
-        );
-        
-        let userId;
-        if (users.length === 0) {
-            const [userResult] = await pool.query(
-                'INSERT INTO users (session_id, created_at) VALUES (?, NOW())',
-                [sessionId]
-            );
-            userId = userResult.insertId;
-        } else {
-            userId = users[0].id;
-        }
-        
-        // Log activity
-        await pool.query(`
-            INSERT INTO activity_logs (
-                user_id,
-                action,
-                poll_id,
-                details,
-                created_at
-            ) VALUES (?, ?, ?, ?, NOW())
-        `, [userId, action, pollId || null, details || null]);
-        
-        res.json({ success: true, message: 'Activity logged' });
-        
-    } catch (error) {
-        console.error('Error logging activity:', error);
-        // Don't fail the request if logging fails
-        res.json({ success: true });
-    }
-});
-
-// Get activity logs (admin only)
-app.get('/api/admin/activity', requireAdmin, async (req, res) => {
-    try {
-        const { limit = 100 } = req.query;
-        
-        const [logs] = await pool.query(`
-            SELECT 
-                al.id,
-                al.action,
-                al.poll_id,
-                al.details,
-                al.created_at,
-                u.session_id,
-                COUNT(v.id) as user_total_votes
-            FROM activity_logs al
-            LEFT JOIN users u ON al.user_id = u.id
-            LEFT JOIN votes v ON u.id = v.user_id
-            GROUP BY al.id
-            ORDER BY al.created_at DESC
-            LIMIT ?
-        `, [parseInt(limit)]);
-        
-        res.json({ success: true, logs });
-        
-    } catch (error) {
-        console.error('Error fetching activity logs:', error);
-        res.status(500).json({ success: false, error: 'Failed to fetch logs' });
-    }
-});
-
-// Get active users count (public endpoint)
-app.get('/api/stats/active-users', async (req, res) => {
-    try {
-        const [result] = await pool.query(`
-            SELECT COUNT(DISTINCT user_id) as active_users
-            FROM activity_logs
-            WHERE created_at >= DATE_SUB(NOW(), INTERVAL 5 MINUTE)
-        `);
-        
-        res.json({ 
-            success: true, 
-            activeUsers: result[0].active_users || 0 
-        });
-        
-    } catch (error) {
-        console.error('Error fetching active users:', error);
-        res.json({ success: true, activeUsers: 0 });
-    }
-});
-
-// Get user's own activity history (by session)
-app.get('/api/activity/my-history', async (req, res) => {
-    try {
-        const { sessionId } = req.query;
-        
-        if (!sessionId) {
-            return res.status(400).json({ 
-                success: false, 
-                error: 'Session ID required' 
-            });
-        }
-        
-        const [logs] = await pool.query(`
-            SELECT 
-                al.action,
-                al.poll_id,
-                al.created_at,
-                p.question
-            FROM activity_logs al
-            LEFT JOIN users u ON al.user_id = u.id
-            LEFT JOIN polls p ON al.poll_id = p.id
-            WHERE u.session_id = ?
-            ORDER BY al.created_at DESC
-            LIMIT 50
-        `, [sessionId]);
-        
-        res.json({ success: true, history: logs });
-        
-    } catch (error) {
-        console.error('Error fetching user history:', error);
-        res.status(500).json({ success: false, error: 'Failed to fetch history' });
-    }
 });
 
 module.exports = app;
