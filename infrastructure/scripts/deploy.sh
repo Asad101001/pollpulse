@@ -1,157 +1,83 @@
+POLLPULSE DEPLOYMENT - COMPLETE ✅
+
+Date: December 30, 2024
+Status: LIVE AND WORKING
+
+URLs:
+- Website: http://44.211.7.10
+- API Health: http://44.211.7.10/api/health
+- API Polls: http://44.211.7.10/api/polls
+
+Credentials:
+- SSH: ssh -i ~/.ssh/pollpulse-key.pem ubuntu@44.211.7.10
+- Database: mysql -h pollpulse-db.c6neuowq6ifc.us-east-1.rds.amazonaws.com -u admin -p
+
+Notes:
+- Infrastructure: 100% working
+- Deployment: Complete
+- Code bugs: Minor frontend issues to fix
+- Next: Debug JavaScript in public/js/app.js
+
+Commands:
+- Check logs: pm2 logs pollpulse
+- Restart app: pm2 restart pollpulse
+- Update code: cd ~/pollpulse && git pull && pm2 restart pollpulse
+ubuntu@ip-10-0-0-71:~$ cd pollpulse/
+ubuntu@ip-10-0-0-71:~/pollpulse$ git pull origin main
+remote: Enumerating objects: 24, done.
+remote: Counting objects: 100% (24/24), done.
+remote: Compressing objects: 100% (4/4), done.
+remote: Total 13 (delta 9), reused 13 (delta 9), pack-reused 0 (from 0)
+Unpacking objects: 100% (13/13), 11.14 KiB | 712.00 KiB/s, done.
+From https://github.com/Asad101001/pollpulse
+ * branch            main       -> FETCH_HEAD
+   f1242c9..0909387  main       -> origin/main
+Updating f1242c9..0909387
+error: Your local changes to the following files would be overwritten by merge:
+        infrastructure/scripts/deploy.sh
+Please commit your changes or stash them before you merge.
+Aborting
+ubuntu@ip-10-0-0-71:~/pollpulse$ git pull origin main
+remote: Enumerating objects: 7, done.
+remote: Counting objects: 100% (7/7), done.
+remote: Compressing objects: 100% (2/2), done.
+remote: Total 4 (delta 2), reused 4 (delta 2), pack-reused 0 (from 0)
+Unpacking objects: 100% (4/4), 347 bytes | 173.00 KiB/s, done.
+From https://github.com/Asad101001/pollpulse
+ * branch            main       -> FETCH_HEAD
+   0909387..8611ef5  main       -> origin/main
+Updating f1242c9..8611ef5
+error: Your local changes to the following files would be overwritten by merge:
+        infrastructure/scripts/deploy.sh
+Please commit your changes or stash them before you merge.
+Aborting
+ubuntu@ip-10-0-0-71:~/pollpulse$ cat infrastructure/scripts/deploy.sh 
 #!/bin/bash
 
 # ============================================
-# POLLPULSE - AUTOMATED DEPLOYMENT SCRIPT
-# Deploys all updates to EC2 server
+# POLLPULSE - DEPLOYMENT SCRIPT
+# Quick deploy updates to EC2
 # ============================================
 
-set -e  # Exit on error
+echo "🚀 Deploying PollPulse updates..."
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
+# Pull latest changes
+echo "📥 Pulling latest code..."
+git pull origin main
 
-# Configuration
-SERVER_IP="44.211.7.10"
-KEY_PATH="$HOME/.ssh/pollpulse-key.pem"
-SERVER_USER="ubuntu"
-LOCAL_PROJECT_PATH="$HOME/pollpulse"
-REMOTE_PROJECT_PATH="/home/ubuntu/pollpulse"
-DB_HOST="pollpulse-db.c6neuowq6ifc.us-east-1.rds.amazonaws.com"
-DB_USER="admin"
+# Install/update dependencies
+echo "📦 Installing dependencies..."
+cd server
+npm install
 
-echo "🎪 PollPulse Deployment Script"
-echo "================================"
+# Restart PM2
+echo "🔄 Restarting application..."
+pm2 restart pollpulse
+
+# Show status
+pm2 status
+
 echo ""
-
-# Step 1: Validate local files exist
-echo -e "${YELLOW}Step 1: Validating local files...${NC}"
-REQUIRED_FILES=(
-    "public/index.html"
-    "public/vote.html"
-    "public/leaderboard.html"
-    "public/css/components.css"
-    "server/server.js"
-)
-
-for file in "${REQUIRED_FILES[@]}"; do
-    if [ ! -f "$LOCAL_PROJECT_PATH/$file" ]; then
-        echo -e "${RED}Error: $file not found!${NC}"
-        echo "Please ensure all updated files are in place."
-        exit 1
-    fi
-done
-echo -e "${GREEN}✓ All local files found${NC}"
-echo ""
-
-# Step 2: Create backup on server
-echo -e "${YELLOW}Step 2: Creating backup on server...${NC}"
-BACKUP_DIR="backup_$(date +%Y%m%d_%H%M%S)"
-ssh -i "$KEY_PATH" "$SERVER_USER@$SERVER_IP" << EOF
-    cd $REMOTE_PROJECT_PATH
-    mkdir -p backups/$BACKUP_DIR
-    cp -r public backups/$BACKUP_DIR/
-    cp server/server.js backups/$BACKUP_DIR/
-    echo "Backup created: backups/$BACKUP_DIR"
-EOF
-echo -e "${GREEN}✓ Backup created${NC}"
-echo ""
-
-# Step 3: Upload frontend files
-echo -e "${YELLOW}Step 3: Uploading frontend files...${NC}"
-scp -i "$KEY_PATH" "$LOCAL_PROJECT_PATH/public/index.html" "$SERVER_USER@$SERVER_IP:$REMOTE_PROJECT_PATH/public/"
-scp -i "$KEY_PATH" "$LOCAL_PROJECT_PATH/public/vote.html" "$SERVER_USER@$SERVER_IP:$REMOTE_PROJECT_PATH/public/"
-scp -i "$KEY_PATH" "$LOCAL_PROJECT_PATH/public/leaderboard.html" "$SERVER_USER@$SERVER_IP:$REMOTE_PROJECT_PATH/public/"
-scp -i "$KEY_PATH" "$LOCAL_PROJECT_PATH/public/css/components.css" "$SERVER_USER@$SERVER_IP:$REMOTE_PROJECT_PATH/public/css/"
-echo -e "${GREEN}✓ Frontend files uploaded${NC}"
-echo ""
-
-# Step 4: Upload backend files
-echo -e "${YELLOW}Step 4: Uploading backend files...${NC}"
-scp -i "$KEY_PATH" "$LOCAL_PROJECT_PATH/server/server.js" "$SERVER_USER@$SERVER_IP:$REMOTE_PROJECT_PATH/server/"
-echo -e "${GREEN}✓ Backend files uploaded${NC}"
-echo ""
-
-# Step 5: Update database schema
-echo -e "${YELLOW}Step 5: Updating database schema...${NC}"
-read -sp "Enter MySQL password: " DB_PASSWORD
-echo ""
-
-ssh -i "$KEY_PATH" "$SERVER_USER@$SERVER_IP" << EOF
-    mysql -h $DB_HOST -u $DB_USER -p$DB_PASSWORD pollpulse << 'SQLEOF'
--- Add username column if not exists
-ALTER TABLE users ADD COLUMN IF NOT EXISTS username VARCHAR(50) DEFAULT 'Anonymous';
-
--- Update existing users
-UPDATE users SET username = 'Anonymous' WHERE username IS NULL OR username = '';
-
--- Add index
-CREATE INDEX IF NOT EXISTS idx_username ON users(username);
-
--- Create view for leaderboard
-CREATE OR REPLACE VIEW v_leaderboard_voters AS
-SELECT 
-    u.id,
-    COALESCE(u.username, 'Anonymous') as username,
-    COUNT(v.id) as total_votes,
-    u.created_at
-FROM users u
-LEFT JOIN votes v ON u.id = v.user_id
-GROUP BY u.id
-HAVING total_votes > 0
-ORDER BY total_votes DESC;
-
--- Verify
-SELECT 'Database schema updated successfully' as status;
-SQLEOF
-EOF
-echo -e "${GREEN}✓ Database schema updated${NC}"
-echo ""
-
-# Step 6: Restart application
-echo -e "${YELLOW}Step 6: Restarting application...${NC}"
-ssh -i "$KEY_PATH" "$SERVER_USER@$SERVER_IP" << EOF
-    cd $REMOTE_PROJECT_PATH/server
-    pm2 restart pollpulse
-    sleep 2
-    pm2 status
-EOF
-echo -e "${GREEN}✓ Application restarted${NC}"
-echo ""
-
-# Step 7: Verify deployment
-echo -e "${YELLOW}Step 7: Verifying deployment...${NC}"
-HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://$SERVER_IP/api/health)
-if [ "$HTTP_STATUS" = "200" ]; then
-    echo -e "${GREEN}✓ Server is responding (HTTP $HTTP_STATUS)${NC}"
-else
-    echo -e "${RED}⚠ Warning: Server returned HTTP $HTTP_STATUS${NC}"
-fi
-echo ""
-
-# Step 8: Display logs
-echo -e "${YELLOW}Step 8: Recent logs:${NC}"
-ssh -i "$KEY_PATH" "$SERVER_USER@$SERVER_IP" << EOF
-    pm2 logs pollpulse --lines 10 --nostream
-EOF
-echo ""
-
-# Success message
-echo -e "${GREEN}╔═══════════════════════════════════════╗${NC}"
-echo -e "${GREEN}║   ✅ Deployment Completed!           ║${NC}"
-echo -e "${GREEN}╚═══════════════════════════════════════╝${NC}"
-echo ""
-echo "🌐 Visit: http://$SERVER_IP"
-echo "🔐 Admin: http://$SERVER_IP/admin-login.html"
-echo ""
-echo "📝 Test Checklist:"
-echo "  1. Homepage layout"
-echo "  2. Vote with username"
-echo "  3. Leaderboard tabs"
-echo "  4. Admin dashboard"
-echo "  5. Copy link feature"
-echo ""
-echo "📊 Monitor logs: ssh -i $KEY_PATH $SERVER_USER@$SERVER_IP 'pm2 logs pollpulse'"
-echo ""
+echo "✅ Deployment complete!"
+echo "   View logs: pm2 logs pollpulse"
+echo "   Check status: pm2 status
