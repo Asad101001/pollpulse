@@ -412,23 +412,43 @@
 
         function copyLink() {
             const url = window.location.href;
-            navigator.clipboard.writeText(url).then(() => {
-                alert('📋 Link copied to clipboard!');
-            }).catch(() => {
-                const textarea = document.createElement('textarea');
-                textarea.value = url;
-                textarea.style.position = 'fixed';
-                textarea.style.opacity = '0';
-                document.body.appendChild(textarea);
-                textarea.select();
-                try {
-                    document.execCommand('copy');
+
+            // Try modern API first
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(url).then(() => {
                     alert('📋 Link copied to clipboard!');
-                } catch {
-                    alert('❌ Failed to copy link');
+                }).catch(err => {
+                    // Fallback
+                    fallbackCopy(url);
+                });
+            } else {
+                // Use fallback for older browsers
+                fallbackCopy(url);
+            }
+        }
+
+        function fallbackCopy(text) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.left = '-9999px';
+            textarea.style.top = '0';
+            document.body.appendChild(textarea);
+            textarea.focus();
+            textarea.select();
+
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    alert('📋 Link copied to clipboard!');
+                } else {
+                    alert('❌ Failed to copy. Please copy manually: ' + text);
                 }
-                document.body.removeChild(textarea);
-            });
+            } catch (err) {
+                alert('❌ Failed to copy. Please copy manually: ' + text);
+            }
+
+            document.body.removeChild(textarea);
         }
 
         function createConfetti() {

@@ -9,7 +9,6 @@
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/animations.css">
     <link rel="stylesheet" href="css/components.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
 
 <body>
@@ -82,21 +81,9 @@
             </div>
         </section>
         <div style="margin-bottom: 48px;"></div>
-        <section class="section-header">
-            <h2 class="section-title">📊 Live Analytics</h2>
-            <p class="section-subtitle">Real-time voting trends and insights</p>
-        </section>
+
         <div style="margin-bottom: 48px;"></div>
-        <section class="charts-section">
-            <div class="chart-card animate-fadeInUp">
-                <h3 class="chart-title">📈 Voting Activity (Last 24 Hours)</h3>
-                <canvas id="votingChart"></canvas>
-            </div>
-            <div class="chart-card animate-fadeInUp delay-200">
-                <h3 class="chart-title">🔥 Most Active Polls</h3>
-                <canvas id="pollsChart"></canvas>
-            </div>
-        </section>
+
         <div style="margin-bottom: 48px;"></div>
         <section class="section-header">
             <h2 class="section-title">Why PollPulse?</h2>
@@ -236,61 +223,6 @@
             }
         }
 
-        function initCharts() {
-            const votingCtx = document.getElementById('votingChart').getContext('2d');
-            const pollsCtx = document.getElementById('pollsChart').getContext('2d');
-
-            votingChart = new Chart(votingCtx, {
-                type: 'line',
-                data: {
-                    labels: Array.from({ length: 24 }, (_, i) => `${i}:00`),
-                    datasets: [{
-                        label: 'Votes',
-                        data: Array.from({ length: 24 }, () => Math.floor(Math.random() * 50)),
-                        borderColor: '#ff0044',
-                        backgroundColor: 'rgba(255, 0, 68, 0.1)',
-                        tension: 0.4,
-                        fill: true
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false }
-                    },
-                    scales: {
-                        y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#fff' } },
-                        x: { grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#fff' } }
-                    }
-                }
-            });
-
-            pollsChart = new Chart(pollsCtx, {
-                type: 'bar',
-                data: {
-                    labels: ['Poll 1', 'Poll 2', 'Poll 3', 'Poll 4', 'Poll 5'],
-                    datasets: [{
-                        label: 'Votes',
-                        data: [45, 38, 32, 28, 25],
-                        backgroundColor: 'rgba(255, 0, 68, 0.8)',
-                        borderColor: '#ff0044',
-                        borderWidth: 2
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false }
-                    },
-                    scales: {
-                        y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#fff' } },
-                        x: { grid: { display: false }, ticks: { color: '#fff' } }
-                    }
-                }
-            });
-        }
 
         function animateValue(id, start, end, duration) {
             const obj = document.getElementById(id);
