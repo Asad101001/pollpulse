@@ -120,7 +120,7 @@
             <form id="loginForm">
                 <div class="form-group">
                     <label class="form-label" for="username">Username</label>
-                    <input type="text" id="username" class="form-input" required autocomplete="username">
+                    <input type="text" id="username" class="form-input" required autocomplete="username" autofocus>
                 </div>
 
                 <div class="form-group">
@@ -144,11 +144,8 @@
         // Check if already logged in
         const adminSession = localStorage.getItem('pollpulse_admin_session');
         if (adminSession) {
-            // Verify session is still valid
             fetch('/api/admin/check', {
-                headers: {
-                    'X-Admin-Session': adminSession
-                }
+                headers: { 'X-Admin-Session': adminSession }
             })
                 .then(r => r.json())
                 .then(data => {
@@ -157,16 +154,24 @@
                     } else {
                         localStorage.removeItem('pollpulse_admin_session');
                     }
+                })
+                .catch(() => {
+                    localStorage.removeItem('pollpulse_admin_session');
                 });
         }
 
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            const username = document.getElementById('username').value;
+            const username = document.getElementById('username').value.trim();
             const password = document.getElementById('password').value;
             const loginButton = document.getElementById('loginButton');
             const errorMessage = document.getElementById('errorMessage');
+
+            if (!username || !password) {
+                showError('Please enter both username and password');
+                return;
+            }
 
             errorMessage.style.display = 'none';
             loginButton.disabled = true;
@@ -184,10 +189,7 @@
                 const data = await response.json();
 
                 if (data.success && data.sessionId) {
-                    // Store session
                     localStorage.setItem('pollpulse_admin_session', data.sessionId);
-
-                    // Redirect to management page
                     window.location.href = 'manage.html';
                 } else {
                     throw new Error(data.error || 'Login failed');
@@ -195,12 +197,17 @@
 
             } catch (error) {
                 console.error('Login error:', error);
-                errorMessage.textContent = '❌ ' + error.message;
-                errorMessage.style.display = 'block';
+                showError(error.message);
                 loginButton.disabled = false;
                 loginButton.innerHTML = '<span>🔓</span><span>Login</span>';
             }
         });
+
+        function showError(message) {
+            const errorEl = document.getElementById('errorMessage');
+            errorEl.textContent = '❌ ' + message;
+            errorEl.style.display = 'block';
+        }
     </script>
 </body>
 
