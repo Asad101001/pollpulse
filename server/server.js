@@ -242,7 +242,6 @@ app.get('/api/polls', async (req, res) => {
     }
 });
 
-// Get top voters
 app.get('/api/stats/top-voters', async (req, res) => {
     try {
         const { limit = 10 } = req.query;
