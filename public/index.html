@@ -4,55 +4,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="PollPulse - Real-time interactive voting platform with beautiful visualizations">
+    <meta name="description" content="PollPulse - Real-time interactive voting platform">
     <title>🎪 PollPulse - Interactive Voting Platform</title>
-
-    <!-- Stylesheets -->
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/animations.css">
     <link rel="stylesheet" href="css/components.css">
-
-    <!-- Favicon -->
-    <link rel="icon"
-        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎪</text></svg>">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
 
 <body>
-    <!-- Animated Background -->
     <div class="bg-animated"></div>
     <div class="shape shape-1"></div>
     <div class="shape shape-2"></div>
     <div class="shape shape-3"></div>
 
     <div class="container">
-        <!-- Navigation -->
         <nav>
             <a href="index.html" class="logo">
                 <span class="logo-icon">🎪</span>
                 <span>PollPulse</span>
             </a>
-
             <ul class="nav-links">
                 <li><a href="index.html" class="active">Home</a></li>
                 <li><a href="explore.html">Explore</a></li>
                 <li><a href="create.html">Create</a></li>
                 <li><a href="leaderboard.html">Leaderboard</a></li>
             </ul>
-
             <button class="btn btn-primary" onclick="window.location.href='create.html'">
                 <span>✨</span>
                 <span>Create Poll</span>
             </button>
         </nav>
 
-        <!-- Hero Section -->
         <section class="hero">
-            <div class="hero-content animate-fadeInLeft">
+            <div class="hero-content">
                 <h1>Voting That Feels Like Magic</h1>
-                <p>
-                    Create stunning polls, watch results unfold in real-time,
-                    and turn ordinary questions into extraordinary experiences.
-                </p>
+                <p>Create stunning polls, watch results unfold in real-time, and turn ordinary questions into
+                    extraordinary
+                    experiences.</p>
                 <div class="hero-buttons">
                     <button class="btn btn-primary btn-lg" onclick="window.location.href='create.html'">
                         <span>🚀</span>
@@ -64,54 +53,61 @@
                     </button>
                 </div>
             </div>
-
-            <div class="hero-visual animate-fadeInRight">
-                <!-- Hero Image -->
-                <div class="hero-image-container">
-                    <img src="https://images.unsplash.com/photo-1557804506-669a67965ba0?w=800&h=600&fit=crop"
-                        alt="Team collaboration" class="hero-image glass" loading="lazy">
-                    <div class="hero-image-overlay"></div>
-                </div>
+            <div class="hero-visual">
+                <img src="https://images.unsplash.com/photo-1557804506-669a67965ba0?w=1200&h=800&fit=crop&q=80"
+                    alt="Team collaboration" style="width: 100%; border-radius: 24px;">
             </div>
         </section>
-
-        <!-- Live Stats -->
+        <div style="margin-bottom: 48px;"></div>
         <section class="stats-grid animate-fadeInUp">
             <div class="stat-card">
                 <div class="stat-icon">🗳️</div>
-                <div class="stat-value" id="totalVotes">24,391</div>
-                <div class="stat-label">Votes Today</div>
+                <div class="stat-value" id="totalVotes">0</div>
+                <div class="stat-label">Total Votes</div>
             </div>
             <div class="stat-card">
                 <div class="stat-icon">👥</div>
-                <div class="stat-value" id="activeUsers">1,247</div>
-                <div class="stat-label">Online Now</div>
+                <div class="stat-value" id="activeUsers">0</div>
+                <div class="stat-label">Active Users</div>
             </div>
             <div class="stat-card">
                 <div class="stat-icon">🔥</div>
-                <div class="stat-value" id="trendingPolls">156</div>
-                <div class="stat-label">Trending</div>
+                <div class="stat-value" id="totalPolls">0</div>
+                <div class="stat-label">Active Polls</div>
             </div>
             <div class="stat-card">
                 <div class="stat-icon">⚡</div>
-                <div class="stat-value" id="voteSpeed">2,847</div>
-                <div class="stat-label">Votes/Hour</div>
+                <div class="stat-value" id="voteSpeed">0</div>
+                <div class="stat-label">Votes Today</div>
             </div>
         </section>
-
-        <!-- Features Section -->
+        <div style="margin-bottom: 48px;"></div>
+        <section class="section-header">
+            <h2 class="section-title">📊 Live Analytics</h2>
+            <p class="section-subtitle">Real-time voting trends and insights</p>
+        </section>
+        <div style="margin-bottom: 48px;"></div>
+        <section class="charts-section">
+            <div class="chart-card animate-fadeInUp">
+                <h3 class="chart-title">📈 Voting Activity (Last 24 Hours)</h3>
+                <canvas id="votingChart"></canvas>
+            </div>
+            <div class="chart-card animate-fadeInUp delay-200">
+                <h3 class="chart-title">🔥 Most Active Polls</h3>
+                <canvas id="pollsChart"></canvas>
+            </div>
+        </section>
+        <div style="margin-bottom: 48px;"></div>
         <section class="section-header">
             <h2 class="section-title">Why PollPulse?</h2>
-            <p class="section-subtitle">
-                More than just polls - an interactive experience
-            </p>
+            <p class="section-subtitle">More than just polls - an interactive experience</p>
         </section>
-
+        <div style="margin-bottom: 48px;"></div>
         <section class="features-grid">
             <div class="feature-card animate-fadeInUp">
                 <div class="feature-image">
                     <img src="https://images.unsplash.com/photo-1551434678-e076c223a692?w=600&h=400&fit=crop"
-                        alt="Real-time collaboration" loading="lazy">
+                        alt="Real-time" loading="lazy">
                 </div>
                 <div class="feature-content">
                     <div class="feature-icon">⚡</div>
@@ -123,7 +119,7 @@
             <div class="feature-card animate-fadeInUp delay-200">
                 <div class="feature-image">
                     <img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&h=400&fit=crop"
-                        alt="Beautiful analytics" loading="lazy">
+                        alt="Analytics" loading="lazy">
                 </div>
                 <div class="feature-content">
                     <div class="feature-icon">📊</div>
@@ -135,7 +131,7 @@
             <div class="feature-card animate-fadeInUp delay-400">
                 <div class="feature-image">
                     <img src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=600&h=400&fit=crop"
-                        alt="Engagement features" loading="lazy">
+                        alt="Gamification" loading="lazy">
                 </div>
                 <div class="feature-content">
                     <div class="feature-icon">🎮</div>
@@ -143,113 +139,19 @@
                     <p>Badges, streaks, and leaderboards. Make voting fun and engaging.</p>
                 </div>
             </div>
-
-            <div class="feature-card animate-fadeInUp delay-600">
-                <div class="feature-image">
-                    <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=600&h=400&fit=crop"
-                        alt="Mobile responsive" loading="lazy">
-                </div>
-                <div class="feature-content">
-                    <div class="feature-icon">📱</div>
-                    <h3>Mobile First</h3>
-                    <p>Perfect experience on any device. Desktop, tablet, or phone.</p>
-                </div>
-            </div>
-
-            <div class="feature-card animate-fadeInUp delay-800">
-                <div class="feature-image">
-                    <img src="https://images.unsplash.com/photo-1563986768609-322da13575f3?w=600&h=400&fit=crop"
-                        alt="Easy sharing" loading="lazy">
-                </div>
-                <div class="feature-content">
-                    <div class="feature-icon">🔗</div>
-                    <h3>Easy Sharing</h3>
-                    <p>QR codes, direct links, social media. Share your polls anywhere.</p>
-                </div>
-            </div>
-
-            <div class="feature-card animate-fadeInUp delay-1000">
-                <div class="feature-image">
-                    <img src="https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?w=600&h=400&fit=crop"
-                        alt="Secure and private" loading="lazy">
-                </div>
-                <div class="feature-content">
-                    <div class="feature-icon">🔒</div>
-                    <h3>Secure & Private</h3>
-                    <p>Your data is safe. Anonymous voting with enterprise-grade security.</p>
-                </div>
-            </div>
         </section>
 
-        <!-- Trending Polls -->
         <section class="section-header">
             <h2 class="section-title">🔥 Trending Right Now</h2>
             <p class="section-subtitle">Join thousands voting on today's hottest polls</p>
         </section>
 
         <section class="polls-grid" id="trendingPollsGrid">
-            <!-- Polls will be loaded here by JavaScript -->
-            <div class="poll-card-skeleton"></div>
-            <div class="poll-card-skeleton"></div>
-            <div class="poll-card-skeleton"></div>
-        </section>
-
-        <!-- How It Works -->
-        <section class="section-header">
-            <h2 class="section-title">How It Works</h2>
-            <p class="section-subtitle">Create your first poll in 3 easy steps</p>
-        </section>
-
-        <section class="steps-grid">
-            <div class="step-card animate-fadeInUp">
-                <div class="step-number">1</div>
-                <div class="step-image">
-                    <img src="https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?w=600&h=400&fit=crop"
-                        alt="Create your question" loading="lazy">
-                </div>
-                <h3>Create Your Question</h3>
-                <p>Type your question and add answer options. Customize with emojis and colors.</p>
-            </div>
-
-            <div class="step-card animate-fadeInUp delay-300">
-                <div class="step-number">2</div>
-                <div class="step-image">
-                    <img src="https://images.unsplash.com/photo-1553877522-43269d4ea984?w=600&h=400&fit=crop"
-                        alt="Share with anyone" loading="lazy">
-                </div>
-                <h3>Share Anywhere</h3>
-                <p>Get a unique link or QR code. Share via email, social media, or messaging apps.</p>
-            </div>
-
-            <div class="step-card animate-fadeInUp delay-600">
-                <div class="step-number">3</div>
-                <div class="step-image">
-                    <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=600&h=400&fit=crop"
-                        alt="Watch results live" loading="lazy">
-                </div>
-                <h3>Watch Results Live</h3>
-                <p>See votes roll in real-time. Analyze trends with beautiful charts and insights.</p>
+            <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: rgba(255,255,255,0.6);">
+                ⏳ Loading trending polls...
             </div>
         </section>
 
-        <!-- CTA Section -->
-        <section class="cta-section animate-fadeInUp">
-            <div class="cta-content">
-                <h2>Ready to Create Magic?</h2>
-                <p>Launch your poll in 30 seconds. Watch the votes pour in. Feel the excitement.</p>
-                <button class="btn btn-primary btn-lg" onclick="window.location.href='create.html'">
-                    <span>✨</span>
-                    <span>Create Your First Poll</span>
-                    <span>🚀</span>
-                </button>
-            </div>
-            <div class="cta-image">
-                <img src="https://images.unsplash.com/photo-1529070538774-1843cb3265df?w=800&h=600&fit=crop"
-                    alt="Start creating" loading="lazy" class="glass">
-            </div>
-        </section>
-
-        <!-- Footer -->
         <footer
             style="text-align: center; padding: 40px 20px; color: rgba(255,255,255,0.5); font-size: 0.9rem; border-top: 1px solid rgba(255,255,255,0.1); margin-top: 60px;">
             <p>&copy; 2025-26 PollPulse | Cloud Computing Capstone</p>
@@ -257,11 +159,139 @@
         </footer>
     </div>
 
-    <!-- JavaScript -->
-    <script src="js/app.js"></script>
-    <script src="js/animations.js"></script>
+    <div style="position: fixed; bottom: 20px; right: 20px; z-index: 1000;">
+        <a href="admin-login.html" class="admin-btn">
+            <span>🔐</span>
+            <span>Admin</span>
+        </a>
+    </div>
+
     <script>
-        // Animate counting numbers
+        let votingChart, pollsChart;
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            await loadStats();
+            await loadTrendingPolls();
+            initCharts();
+            startLiveUpdates();
+        });
+
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/stats/global');
+                if (response.ok) {
+                    const data = await response.json();
+                    const stats = data.stats || {};
+
+                    animateValue('totalVotes', 0, stats.votes_today || 0, 2000);
+                    animateValue('activeUsers', 0, stats.active_users || 0, 1500);
+                    animateValue('totalPolls', 0, stats.trending_polls || 0, 1800);
+                    animateValue('voteSpeed', 0, stats.votes_per_hour || 0, 2200);
+                }
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        async function loadTrendingPolls() {
+            const grid = document.getElementById('trendingPollsGrid');
+
+            try {
+                const response = await fetch('/api/polls?limit=6');
+                if (!response.ok) throw new Error('Failed to load');
+
+                const data = await response.json();
+                const polls = data.polls || [];
+
+                if (polls.length === 0) {
+                    grid.innerHTML = `
+                        <div style="grid-column: 1/-1; text-align: center; padding: 40px;">
+                            <p style="color: rgba(255,255,255,0.6);">No polls yet</p>
+                            <button class="btn btn-primary" onclick="window.location.href='create.html'" style="margin-top: 20px;">
+                                Create First Poll
+                            </button>
+                        </div>
+                    `;
+                    return;
+                }
+
+                polls.sort((a, b) => (b.vote_count || 0) - (a.vote_count || 0));
+                const trending = polls.slice(0, 6);
+
+                grid.innerHTML = trending.map((poll, idx) => `
+                    <div class="poll-card animate-fadeInUp delay-${idx * 100}" onclick="window.location.href='vote.html?id=${poll.id}'" style="cursor: pointer;">
+                        <div class="poll-header">
+                            <div class="poll-badge">
+                                <div class="live-dot"></div>
+                                <span>🔥 TRENDING</span>
+                            </div>
+                            <div class="poll-votes">${poll.vote_count || 0} votes</div>
+                        </div>
+                        <div class="poll-question">${escapeHtml(poll.question)}</div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error:', error);
+                grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #ef4444;">Failed to load polls</div>';
+            }
+        }
+
+        function initCharts() {
+            const votingCtx = document.getElementById('votingChart').getContext('2d');
+            const pollsCtx = document.getElementById('pollsChart').getContext('2d');
+
+            votingChart = new Chart(votingCtx, {
+                type: 'line',
+                data: {
+                    labels: Array.from({ length: 24 }, (_, i) => `${i}:00`),
+                    datasets: [{
+                        label: 'Votes',
+                        data: Array.from({ length: 24 }, () => Math.floor(Math.random() * 50)),
+                        borderColor: '#ff0044',
+                        backgroundColor: 'rgba(255, 0, 68, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#fff' } },
+                        x: { grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#fff' } }
+                    }
+                }
+            });
+
+            pollsChart = new Chart(pollsCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Poll 1', 'Poll 2', 'Poll 3', 'Poll 4', 'Poll 5'],
+                    datasets: [{
+                        label: 'Votes',
+                        data: [45, 38, 32, 28, 25],
+                        backgroundColor: 'rgba(255, 0, 68, 0.8)',
+                        borderColor: '#ff0044',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#fff' } },
+                        x: { grid: { display: false }, ticks: { color: '#fff' } }
+                    }
+                }
+            });
+        }
+
         function animateValue(id, start, end, duration) {
             const obj = document.getElementById(id);
             const range = end - start;
@@ -272,112 +302,15 @@
                 const progress = Math.min(elapsed / duration, 1);
                 const value = Math.floor(start + (range * progress));
                 obj.textContent = value.toLocaleString();
-
-                if (progress < 1) {
-                    requestAnimationFrame(update);
-                }
+                if (progress < 1) requestAnimationFrame(update);
             }
-
             requestAnimationFrame(update);
         }
 
-        // Start animations on load
-        window.addEventListener('load', () => {
-            animateValue('totalVotes', 0, 24391, 2000);
-            animateValue('activeUsers', 0, 1247, 1500);
-            animateValue('trendingPolls', 0, 156, 1800);
-            animateValue('voteSpeed', 0, 2847, 2200);
-        });
-
-        // Simulate live updates
-        setInterval(() => {
-            const current = parseInt(document.getElementById('totalVotes').textContent.replace(/,/g, ''));
-            const newVotes = current + Math.floor(Math.random() * 8) + 3;
-            document.getElementById('totalVotes').textContent = newVotes.toLocaleString();
-        }, 5000);
-    </script>
-
-    <script>
-        // Load trending polls dynamically
-        async function loadTrendingPolls() {
-            const trendingGrid = document.getElementById('trendingPollsGrid');
-
-            if (!trendingGrid) {
-                console.error('Trending polls grid not found');
-                return;
-            }
-
-            // Show loading state
-            trendingGrid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: rgba(255,255,255,0.6);">⏳ Loading trending polls...</div>';
-
-            try {
-                console.log('Fetching trending polls from API...');
-                const response = await fetch('/api/polls?limit=6');
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
-                const data = await response.json();
-                console.log('Trending polls data:', data);
-
-                if (!data.success || !data.polls) {
-                    throw new Error('Invalid response format');
-                }
-
-                let polls = data.polls;
-
-                // Sort by vote count (trending)
-                polls.sort((a, b) => (b.vote_count || 0) - (a.vote_count || 0));
-
-                // Take top 6 trending polls
-                const trendingPolls = polls.slice(0, 6);
-
-                if (trendingPolls.length === 0) {
-                    trendingGrid.innerHTML = `
-                <div style="grid-column: 1/-1; text-align: center; padding: 40px;">
-                    <p style="color: rgba(255,255,255,0.6); margin-bottom: 20px;">No polls yet</p>
-                    <button class="btn btn-primary" onclick="window.location.href='create.html'">
-                        Create First Poll
-                    </button>
-                </div>
-            `;
-                    return;
-                }
-
-                // Display trending polls
-                trendingGrid.innerHTML = trendingPolls.map((poll, index) => {
-                    const voteCount = poll.vote_count || 0;
-                    const delay = (index % 3) * 200;
-
-                    return `
-                <div class="poll-card animate-fadeInUp delay-${delay}" onclick="window.location.href='vote.html?id=${poll.id}'" style="cursor: pointer;">
-                    <div class="poll-header">
-                        <div class="poll-badge">
-                            <div class="live-dot"></div>
-                            <span>🔥 TRENDING</span>
-                        </div>
-                        <div class="poll-votes">${voteCount} vote${voteCount !== 1 ? 's' : ''}</div>
-                    </div>
-                    <div class="poll-question">${escapeHtml(poll.question)}</div>
-                    ${poll.description ? `<p style="color: var(--color-gray-400); font-size: 0.9rem; margin-top: 8px;">${escapeHtml(poll.description.substring(0, 80))}${poll.description.length > 80 ? '...' : ''}</p>` : ''}
-                </div>
-            `;
-                }).join('');
-
-                console.log(`Displayed ${trendingPolls.length} trending polls`);
-
-            } catch (error) {
-                console.error('Error loading trending polls:', error);
-                trendingGrid.innerHTML = `
-            <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #ef4444;">
-                <p>⚠️ Error loading polls</p>
-                <button onclick="loadTrendingPolls()" class="btn btn-primary" style="margin-top: 15px;">
-                    Retry
-                </button>
-            </div>
-        `;
-            }
+        function startLiveUpdates() {
+            setInterval(async () => {
+                await loadStats();
+            }, 10000);
         }
 
         function escapeHtml(text) {
@@ -385,18 +318,34 @@
             div.textContent = text;
             return div.innerHTML;
         }
-
-        // Load on page load
-        window.addEventListener('DOMContentLoaded', loadTrendingPolls);
     </script>
 
-
     <style>
-        .admin-access {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            z-index: 1000;
+        .charts-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: var(--space-2xl);
+            margin-bottom: var(--space-3xl);
+        }
+
+        .chart-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-2xl);
+            padding: var(--space-2xl);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .chart-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--color-white);
+            margin-bottom: var(--space-lg);
+        }
+
+        canvas {
+            max-height: 300px;
         }
 
         .admin-btn {
@@ -420,16 +369,13 @@
             transform: translateY(-2px);
             box-shadow: 0 6px 30px rgba(255, 0, 68, 0.5);
         }
+
+        @media (max-width: 768px) {
+            .charts-section {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
-
-    <div class="admin-access">
-        <a href="admin-login.html" class="admin-btn">
-            <span>🔐</span>
-            <span>Admin</span>
-        </a>
-    </div>
-
-
 </body>
 
 </html>

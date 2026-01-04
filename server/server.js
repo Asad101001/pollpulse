@@ -49,7 +49,10 @@ function requireAdmin(req, res, next) {
     next();
 }
 
-// Health check
+// ============================================
+// HEALTH & STATUS
+// ============================================
+
 app.get('/api/health', (req, res) => {
     res.json({ 
         status: 'ok', 
@@ -59,7 +62,10 @@ app.get('/api/health', (req, res) => {
     });
 });
 
-// Admin login
+// ============================================
+// ADMIN AUTHENTICATION
+// ============================================
+
 app.post('/api/admin/login', (req, res) => {
     const { username, password } = req.body;
     
@@ -83,7 +89,6 @@ app.post('/api/admin/login', (req, res) => {
     }
 });
 
-// Admin logout
 app.post('/api/admin/logout', (req, res) => {
     const sessionId = req.headers['x-admin-session'];
     if (sessionId) {
@@ -92,10 +97,13 @@ app.post('/api/admin/logout', (req, res) => {
     res.json({ success: true, message: 'Logged out' });
 });
 
-// Check admin session
 app.get('/api/admin/check', requireAdmin, (req, res) => {
     res.json({ success: true, authenticated: true });
 });
+
+// ============================================
+// ADMIN POLL MANAGEMENT
+// ============================================
 
 // Get all polls (admin - includes ended polls)
 app.get('/api/admin/polls', requireAdmin, async (req, res) => {
@@ -120,6 +128,34 @@ app.get('/api/admin/polls', requireAdmin, async (req, res) => {
     } catch (error) {
         console.error('Error fetching admin polls:', error);
         res.status(500).json({ success: false, error: 'Failed to fetch polls' });
+    }
+});
+
+// Get voters for a specific poll (admin only)
+app.get('/api/admin/polls/:id/voters', requireAdmin, async (req, res) => {
+    try {
+        const pollId = req.params.id;
+        
+        const [voters] = await pool.query(`
+            SELECT 
+                v.id as vote_id,
+                v.voted_at,
+                COALESCE(u.username, 'Anonymous') as username,
+                u.session_id,
+                po.option_text,
+                po.emoji,
+                u.ip_address
+            FROM votes v
+            JOIN users u ON v.user_id = u.id
+            JOIN poll_options po ON v.option_id = po.id
+            WHERE v.poll_id = ?
+            ORDER BY v.voted_at DESC
+        `, [pollId]);
+        
+        res.json({ success: true, voters });
+    } catch (error) {
+        console.error('Error fetching voters:', error);
+        res.status(500).json({ success: false, error: 'Failed to fetch voters' });
     }
 });
 
@@ -203,10 +239,14 @@ app.patch('/api/admin/polls/:id/status', requireAdmin, async (req, res) => {
     }
 });
 
+// ============================================
+// PUBLIC POLL ENDPOINTS
+// ============================================
+
 // Get all polls (public - active only)
 app.get('/api/polls', async (req, res) => {
     try {
-        const { filter = 'all', search = '', limit = 20 } = req.query;
+        const { filter = 'all', search = '', limit = 50 } = req.query;
         
         let query = `
             SELECT 
@@ -242,30 +282,6 @@ app.get('/api/polls', async (req, res) => {
     }
 });
 
-app.get('/api/stats/top-voters', async (req, res) => {
-    try {
-        const { limit = 10 } = req.query;
-        
-        const [voters] = await pool.query(`
-            SELECT 
-                u.id,
-                u.created_at,
-                COUNT(v.id) as total_votes
-            FROM users u
-            LEFT JOIN votes v ON u.id = v.user_id
-            GROUP BY u.id
-            HAVING total_votes > 0
-            ORDER BY total_votes DESC
-            LIMIT ?
-        `, [parseInt(limit)]);
-        
-        res.json({ success: true, voters });
-    } catch (error) {
-        console.error('Error fetching top voters:', error);
-        res.status(500).json({ success: false, error: 'Failed to fetch top voters' });
-    }
-});
-
 // Get single poll with options
 app.get('/api/polls/:id', async (req, res) => {
     try {
@@ -282,7 +298,7 @@ app.get('/api/polls/:id', async (req, res) => {
         
         const poll = polls[0];
         
-        // Check if poll has actually ended
+        // Check if poll has ended
         if (poll.ends_at && new Date(poll.ends_at) < new Date()) {
             poll.status = 'ended';
         }
@@ -393,11 +409,13 @@ app.post('/api/polls', async (req, res) => {
     }
 });
 
-// Submit vote
+// Submit vote (with username support)
 app.post('/api/polls/:id/vote', async (req, res) => {
+    const connection = await pool.getConnection();
+    
     try {
         const pollId = req.params.id;
-        const { optionId, sessionId } = req.body;
+        const { optionId, sessionId, username = 'Anonymous' } = req.body;
         
         if (!optionId || !sessionId) {
             return res.status(400).json({ 
@@ -406,7 +424,7 @@ app.post('/api/polls/:id/vote', async (req, res) => {
             });
         }
         
-        const [polls] = await pool.query(
+        const [polls] = await connection.query(
             'SELECT * FROM polls WHERE id = ?',
             [pollId]
         );
@@ -421,28 +439,40 @@ app.post('/api/polls/:id/vote', async (req, res) => {
             return res.status(400).json({ success: false, error: 'Poll has ended' });
         }
         
-        let [users] = await pool.query(
+        await connection.beginTransaction();
+        
+        // Get or create user with username
+        let [users] = await connection.query(
             'SELECT id FROM users WHERE session_id = ?',
             [sessionId]
         );
         
         let userId;
+        const cleanUsername = (username || 'Anonymous').trim().substring(0, 50);
+        
         if (users.length === 0) {
-            const [userResult] = await pool.query(
-                'INSERT INTO users (session_id, created_at) VALUES (?, NOW())',
-                [sessionId]
+            const [userResult] = await connection.query(
+                'INSERT INTO users (session_id, username, created_at) VALUES (?, ?, NOW())',
+                [sessionId, cleanUsername]
             );
             userId = userResult.insertId;
         } else {
             userId = users[0].id;
             
+            // Update username if provided
+            await connection.query(
+                'UPDATE users SET username = ? WHERE id = ?',
+                [cleanUsername, userId]
+            );
+            
             if (!poll.allow_multiple_votes) {
-                const [existingVotes] = await pool.query(
+                const [existingVotes] = await connection.query(
                     'SELECT id FROM votes WHERE poll_id = ? AND user_id = ?',
                     [pollId, userId]
                 );
                 
                 if (existingVotes.length > 0) {
+                    await connection.rollback();
                     return res.status(400).json({ 
                         success: false, 
                         error: 'You have already voted on this poll' 
@@ -451,20 +481,30 @@ app.post('/api/polls/:id/vote', async (req, res) => {
             }
         }
         
-        await pool.query(`
+        await connection.query(`
             INSERT INTO votes (poll_id, option_id, user_id, voted_at)
             VALUES (?, ?, ?, NOW())
         `, [pollId, optionId, userId]);
         
+        await connection.commit();
+        
         res.json({ 
             success: true, 
-            message: 'Vote recorded successfully' 
+            message: 'Vote recorded successfully',
+            username: cleanUsername
         });
     } catch (error) {
+        await connection.rollback();
         console.error('Error submitting vote:', error);
         res.status(500).json({ success: false, error: 'Failed to submit vote' });
+    } finally {
+        connection.release();
     }
 });
+
+// ============================================
+// STATISTICS ENDPOINTS
+// ============================================
 
 // Get global statistics
 app.get('/api/stats/global', async (req, res) => {
@@ -484,7 +524,33 @@ app.get('/api/stats/global', async (req, res) => {
     }
 });
 
-// Get leaderboard (polls only)
+// Get top voters (with usernames)
+app.get('/api/stats/top-voters', async (req, res) => {
+    try {
+        const { limit = 10 } = req.query;
+        
+        const [voters] = await pool.query(`
+            SELECT 
+                u.id,
+                COALESCE(u.username, 'Anonymous') as username,
+                u.created_at,
+                COUNT(v.id) as total_votes
+            FROM users u
+            LEFT JOIN votes v ON u.id = v.user_id
+            GROUP BY u.id
+            HAVING total_votes > 0
+            ORDER BY total_votes DESC
+            LIMIT ?
+        `, [parseInt(limit)]);
+        
+        res.json({ success: true, voters });
+    } catch (error) {
+        console.error('Error fetching top voters:', error);
+        res.status(500).json({ success: false, error: 'Failed to fetch top voters' });
+    }
+});
+
+// Get leaderboard (polls only for now)
 app.get('/api/leaderboard', async (req, res) => {
     try {
         const { type = 'polls', limit = 10 } = req.query;
@@ -518,6 +584,10 @@ app.get('/api/leaderboard', async (req, res) => {
     }
 });
 
+// ============================================
+// ERROR HANDLING & CATCH-ALL
+// ============================================
+
 // Catch-all for frontend routes
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, '../public/index.html'));
@@ -532,7 +602,10 @@ app.use((err, req, res, next) => {
     });
 });
 
-// Start server
+// ============================================
+// SERVER STARTUP
+// ============================================
+
 async function startServer() {
     try {
         await testConnection();
@@ -544,6 +617,11 @@ async function startServer() {
 ║   Port: ${PORT}                          ║
 ║   Environment: ${process.env.NODE_ENV || 'development'}            ║
 ║   Database: Connected                 ║
+║   Features:                           ║
+║   ✓ Username Support                  ║
+║   ✓ Admin Dashboard                   ║
+║   ✓ Voter Details                     ║
+║   ✓ Real-time Stats                   ║
 ╚═══════════════════════════════════════╝
             `);
         });
