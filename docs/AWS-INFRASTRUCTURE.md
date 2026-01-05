@@ -2,7 +2,7 @@
 
 ## Overview
 PollPulse is deployed on AWS using the following services:
-- **EC2**: t2.micro instance running Ubuntu 22.04
+- **EC2**: t4.micro instance running Ubuntu 22.04
 - **RDS**: MySQL 8.0 database (db.t3.micro)
 - **VPC**: Custom VPC with public/private subnets
 - **Elastic IP**: Static IP for consistent access
@@ -58,7 +58,7 @@ PollPulse is deployed on AWS using the following services:
 
 ### Instance Details
 - **Instance ID**: i-032d246a7913744bd
-- **Type**: t2.micro (1 vCPU, 1 GB RAM)
+- **Type**: t4.micro (1 vCPU, 1 GB RAM)
 - **AMI**: Ubuntu Server 22.04 LTS
 - **Public IP**: 35.153.39.217
 - **Elastic IP**: 44.211.7.10
@@ -115,14 +115,13 @@ PollPulse is deployed on AWS using the following services:
 - **Backup Retention**: 7 days
 - **Automated Backups**: Enabled
 
-![RDS Configuration](images/aws/11-rds-configuration.png)
-*Figure 11: RDS database configuration settings*
+
 
 ### Security Group
 - **Inbound Rules**:
   - MySQL (3306): EC2 security group only
 
-![RDS Security Group](images/aws/12-rds-security-group.png)
+![RDS Security Group](images/aws/11-rds-security-group.png)
 *Figure 12: RDS security group restricting access to EC2*
 
 ---
@@ -148,7 +147,7 @@ VPC (10.0.0.0/16)
                 - Accessible only from EC2
 ```
 
-![Network Diagram](images/aws/13-network-diagram.png)
+![Network Diagram](images/aws/12-network-diagram.png)
 *Figure 13: Complete network architecture*
 
 ---
@@ -164,22 +163,11 @@ VPC (10.0.0.0/16)
 
 **Total Monthly Cost**: $0.00 (within free tier limits)
 
-![Cost Dashboard](images/aws/14-cost-dashboard.png)
-*Figure 14: AWS cost dashboard showing free tier usage*
+![Cost Dashboard](images/aws/13-cost-dashboard.png)
+*Figure 13: AWS cost dashboard showing free tier usage*
 
 ---
 
-## 6. Monitoring & Logs
-
-### CloudWatch Metrics
-- CPU Utilization: < 5% average
-- Network In: ~10 MB/hour
-- Network Out: ~20 MB/hour
-
-![CloudWatch Metrics](images/aws/15-cloudwatch-metrics.png)
-*Figure 15: CloudWatch monitoring dashboard*
-
----
 
 ## 7. Backup Strategy
 
@@ -221,39 +209,3 @@ VPC (10.0.0.0/16)
 ## Conclusion
 
 This infrastructure provides a scalable, secure, and cost-effective deployment for PollPulse while remaining within AWS Free Tier limits.
-```
-
-#### 3. Screenshot Naming Guide
-
-**AWS Infrastructure Screenshots:**
-```
-01-vpc-overview.png           → VPC dashboard showing your VPC
-02-vpc-subnets.png           → Subnets list
-03-public-subnet-details.png → Public subnet configuration
-04-private-subnet-details.png → Private subnet configuration
-05-internet-gateway.png      → IGW attached to VPC
-06-route-tables.png          → Route table configuration
-07-ec2-dashboard.png         → EC2 instances list
-08-ec2-instance-details.png  → Your instance details page
-09-ec2-security-group.png    → Security group inbound rules
-10-ec2-key-pair.png          → Key pair information
-11-elastic-ip.png            → Elastic IP association
-12-rds-dashboard.png         → RDS instances list
-13-rds-instance-details.png  → Database details page
-14-rds-configuration.png     → DB configuration tab
-15-rds-security-group.png    → RDS security group rules
-16-cloudwatch-metrics.png    → Monitoring dashboard
-17-cost-explorer.png         → AWS cost dashboard
-```
-
-**Application Screenshots:**
-```
-app/01-homepage.png          → Full homepage view
-app/02-create-poll.png       → Poll creation page
-app/03-voting-page.png       → Vote page with username entry
-app/04-results.png           → Poll results view
-app/05-leaderboard-polls.png → Leaderboard - polls tab
-app/06-leaderboard-voters.png → Leaderboard - voters tab
-app/07-admin-login.png       → Admin login page
-app/08-admin-dashboard.png   → Admin poll management
-app/09-admin-voters.png      → Admin viewing voter details
