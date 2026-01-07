@@ -4,7 +4,7 @@
 
 Live Demo: http://44.211.7.10
 
-![PollPulse Banner](https://via.placeholder.com/1200x400/ff0044/ffffff?text=PollPulse)
+![PollPulse Banner](images/app/01-homepage.png)
 
 ## 📋 Table of Contents
 
@@ -129,16 +129,6 @@ PollPulse is a real-time interactive polling platform built as a Cloud Computing
 ```
 pollpulse/
 ├── docs/                           # Documentation files
-│   ├── IMPLEMENTATION-GUIDE.md     # Step-by-step setup
-│   ├── AWS-SETUP.md                # AWS infrastructure setup
-│   ├── README.md                   # This file
-│   ├── visual-design.md            # UI/UX design decisions
-│   ├── user-manual.md              # End-user guide
-│   ├── deployment-guide.md         # Deployment instructions
-│   ├── database-schema.md          # Database design
-│   ├── architecture.md             # System architecture
-│   └── api-documentation.md        # API endpoints reference
-│
 ├── public/                         # Frontend files (served statically)
 │   ├── index.html                  # Homepage
 │   ├── explore.html                # Browse all polls
@@ -261,115 +251,6 @@ npm start
 ```
 http://localhost:3000
 ```
-
----
-
-## 📡 API Documentation
-
-### Public Endpoints
-
-#### `GET /api/health`
-Health check endpoint
-```json
-Response: {
-  "status": "ok",
-  "timestamp": "2024-01-03T10:30:00Z",
-  "uptime": 123456,
-  "database": "connected"
-}
-```
-
-#### `GET /api/polls`
-Get all polls
-```bash
-Query params: ?limit=20&filter=all&search=query
-Response: {
-  "success": true,
-  "polls": [...]
-}
-```
-
-#### `GET /api/polls/:id`
-Get single poll with options
-```json
-Response: {
-  "success": true,
-  "poll": {
-    "id": 1,
-    "question": "...",
-    "options": [...],
-    "total_votes": 123
-  }
-}
-```
-
-#### `POST /api/polls`
-Create new poll
-```json
-Request: {
-  "question": "Your question?",
-  "description": "Optional description",
-  "options": [
-    {"text": "Option 1", "emoji": "😊"},
-    {"text": "Option 2", "emoji": "👍"}
-  ],
-  "theme": "default",
-  "duration": 0,
-  "showResults": true,
-  "multipleVotes": false
-}
-Response: {
-  "success": true,
-  "pollId": 123
-}
-```
-
-#### `POST /api/polls/:id/vote`
-Submit a vote
-```json
-Request: {
-  "optionId": 5,
-  "sessionId": "session_xxx"
-}
-Response: {
-  "success": true,
-  "message": "Vote recorded"
-}
-```
-
-### Admin Endpoints (Require Authentication)
-
-#### `POST /api/admin/login`
-Admin login
-```json
-Request: {
-  "username": "admin",
-  "password": "password"
-}
-Response: {
-  "success": true,
-  "sessionId": "admin_xxx"
-}
-```
-
-#### `DELETE /api/admin/polls/:id`
-Delete poll (admin only)
-```bash
-Headers: X-Admin-Session: admin_xxx
-Response: {"success": true}
-```
-
-#### `GET /api/admin/activity`
-Get all user activity
-```bash
-Headers: X-Admin-Session: admin_xxx
-Response: {
-  "success": true,
-  "logs": [...]
-}
-```
-
-For complete API documentation, see [api-documentation.md](docs/api-documentation.md)
 
 ---
 
