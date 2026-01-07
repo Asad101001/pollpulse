@@ -24,7 +24,6 @@ PollPulse is a modern web application that transforms ordinary polls into engagi
 AWS Cloud
 ├── EC2 (t4.micro)          - Web Application
 ├── RDS MySQL (db.t4.micro) - Vote Storage
-├── S3                      - Static Assets
 └── CloudWatch              - Monitoring
 ```
 
@@ -33,7 +32,6 @@ AWS Cloud
 **Frontend:**
 - HTML5, CSS3 (Glassmorphism)
 - Vanilla JavaScript (ES6+)
-- Chart.js for visualizations
 
 **Backend:**
 - Node.js 18+ with Express
@@ -41,7 +39,7 @@ AWS Cloud
 - Real-time updates (polling)
 
 **Cloud:**
-- AWS EC2, RDS, S3
+- AWS EC2, RDS
 - 100% Free Tier compliant
 
 ## 🎯 Unique Features
@@ -160,15 +158,6 @@ Background: #0a0e27 (Deep Navy)
 - ✅ Mobile responsive (320px - 4K)
 - ✅ Zero cost (AWS Free Tier)
 
-## 🎬 Demo Day Plan
-
-1. **Create live poll** with QR code
-2. **Audience participation** - Everyone votes
-3. **Watch results** update in real-time
-4. **Show analytics** - Vote trends, heatmaps
-5. **Technical deep-dive** - Architecture, database
-
-**Backup plans included for all failure scenarios.**
 
 ## 📅 Development Timeline
 
@@ -201,14 +190,6 @@ Detailed deployment guide in `docs/deployment-guide.md`
 - SSH key pair
 
 **Deployment time:** ~2 hours
-
-## 📝 Documentation
-
-- [Architecture Diagram](docs/architecture.md)
-- [Database Schema](docs/database-schema.md)
-- [API Documentation](docs/api-docs.md)
-- [Deployment Guide](docs/deployment-guide.md)
-- [User Manual](docs/user-manual.md)
 
 ## 🎯 Use Cases
 
